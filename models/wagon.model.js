@@ -5,10 +5,10 @@ const wagonSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    wagonClass: {
-        type: String,
+    wagonClassRef: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'WagonClass',
         required: true,
-        enum: ['first class', 'second class', 'third class'],
     },
     seats: [
         {
