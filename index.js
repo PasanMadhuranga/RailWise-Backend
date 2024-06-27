@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import express from "express";
 import allRoutes from "./routes/allRoutes.js";
-import { releaseExpiredHolds } from "./controllers/allControllers.js";
+// import { releaseExpiredHolds } from "./controllers/allControllers.js";
 const app = express();
 
 const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use("/api", allRoutes);
 
 // Periodic task to release expired booking holds
-setInterval(releaseExpiredHolds, 60 * 1000); // Run every minute
+// setInterval(releaseExpiredHolds, 60 * 1000); // Run every minute
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
