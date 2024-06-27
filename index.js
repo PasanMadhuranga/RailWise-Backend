@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import express from "express";
 import allRoutes from "./routes/allRoutes.js";
+import cors from "cors";
 // import { releaseExpiredHolds } from "./controllers/allControllers.js";
 const app = express();
 
@@ -15,8 +16,9 @@ mongoose
     console.error("Error connecting to MongoDB", err);
   });
 
-app.use(express.json());
 
+app.use(express.json());
+app.use(cors())
 app.use("/api", allRoutes);
 
 // Periodic task to release expired booking holds
