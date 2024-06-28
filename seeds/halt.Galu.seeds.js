@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Halt from "../models/halt.model.js";
 import Station from "../models/station.model.js";
 import Schedule from "../models/schedule.model.js";
@@ -40,7 +39,8 @@ const stationsData = [
   { name: "Maradana", arrival: "09:47 am", departure: "09:47 am" },
 ];
 
-const seedHalts = async () => {
+const populateGaluHalts = async () => {
+  try{
   const train = await Train.findOne({ name: "Galu Kumari" });
   const relevantSchedules = await Schedule.find({ trainRef: train._id })
   const schedule = relevantSchedules[0]; // Replace with the correct schedule index
@@ -67,14 +67,10 @@ const seedHalts = async () => {
     price += Math.floor(Math.random() * (50 - 10 + 1)) + 10; // increment price by add a random value between between 10 and 50
     await halt.save();
   }
-  console.log("Seeding complete!");
+  console.log("Galu Kumari halts successfully populated");
+} catch (error) {
+  console.error("Error populating Galu Kumari halts:", error);
+}
 };
 
-const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
-
-// Connect to MongoDB
-mongoose
-  .connect(dbUrl)
-  .then(() => seedHalts())
-  .catch((err) => console.error(err))
-  .finally(() => mongoose.disconnect());
+export default populateGaluHalts;

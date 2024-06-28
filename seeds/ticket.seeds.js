@@ -1,21 +1,9 @@
-import mongoose from "mongoose";
 import Booking from "../models/booking.model.js";
 import Schedule from "../models/schedule.model.js";
 import Train from "../models/train.model.js";
 import Ticket from "../models/ticket.model.js";
 import Wagon from "../models/wagon.model.js";
 
-const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
-
-// Connect to MongoDB
-mongoose
-  .connect(dbUrl)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB", err);
-  });
 
   const NamesandGender = [
     { name: "Kamal", gender: "male"},
@@ -63,7 +51,7 @@ mongoose
   
 
 // Function to create bookedSeats data
-const createBookedSeats = async () => {
+const populateTickets = async () => {
   try {
     // Get the booking data
     const bookings = await Booking.find({});
@@ -98,10 +86,8 @@ const createBookedSeats = async () => {
 
     console.log("Tickets successfully populated");
   } catch (error) {
-    console.error("Error populating bookedSeats:", error);
-  } finally {
-    mongoose.connection.close();
-  }
+    console.error("Error populating tickets:", error);
+  } 
 };
 
-createBookedSeats();
+export default populateTickets;

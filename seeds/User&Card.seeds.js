@@ -1,18 +1,6 @@
-import mongoose from "mongoose";
 import bcryptjs from "bcryptjs";
 import User from "../models/user.model.js";
 import CardDetail from "../models/cardDetail.model.js";
-
-const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
-
-// Connect to MongoDB
-mongoose.connect(dbUrl)
-.then(() => {
-    console.log('Connected to MongoDB');
-})
-.catch(err => {
-    console.error('Error connecting to MongoDB', err);
-});
 
 const saltRounds = 10;
 
@@ -86,7 +74,7 @@ const cardDetails = [
     }
 ];
 
-async function populate() {
+async function populateUsersAndCardDetails() {
     try {
         await User.deleteMany({});
         await CardDetail.deleteMany({});
@@ -110,15 +98,13 @@ async function populate() {
         for (const cardDetail of cardDetailsWithUserRef) {
             const newCardDetail = new CardDetail(cardDetail);
             await newCardDetail.save();
-            console.log(`Card detail for ${cardDetail.cardHolderName} saved successfully.`);
+            // console.log(`Card detail for ${cardDetail.cardHolderName} saved successfully.`);
         }
 
-        console.log("Data populated successfully.");
+        console.log("Users and card details populated successfully.");
     } catch (error) {
-        console.error("Error populating data:", error);
-    } finally {
-        mongoose.connection.close();
-    }
+        console.error("Error populating users and card details:", error);
+    } 
 }
 
-populate();
+export default populateUsersAndCardDetails;

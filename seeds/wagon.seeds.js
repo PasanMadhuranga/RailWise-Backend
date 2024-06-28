@@ -1,21 +1,9 @@
-import mongoose from "mongoose";
 import Wagon from "../models/wagon.model.js";
 import WagonClass from "../models/wagonClass.model.js";
 import Seat from "../models/seat.model.js";
 
-const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
-
-// Connect to MongoDB
-mongoose
-  .connect(dbUrl)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB", err);
-  });
-
 async function populateWagons() {
+  try {
   // Find all Wagon types
   const wagonClasses = await WagonClass.find();
   const seatsArr = await Seat.find();
@@ -42,9 +30,10 @@ async function populateWagons() {
     { wagonNumber: 2, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(180, 200).map(seat => seat._id) },
   ]);
 
-  // Close the connection after populating
-  await mongoose.connection.close();
   console.log("Wagones successfully populated");
+} catch (error) {
+  console.error("Error populating wagons:", error);
+}
 }
 
-populateWagons().catch((err) => console.error(err));
+export default populateWagons;

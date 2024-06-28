@@ -5,7 +5,7 @@ import cors from "cors";
 // import { releaseExpiredHolds } from "./controllers/allControllers.js";
 const app = express();
 
-const dbUrl = "mongodb://127.0.0.1:27017/train-booking-test";
+const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
 
 mongoose
   .connect(dbUrl)
