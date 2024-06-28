@@ -83,7 +83,7 @@ async function populateUsersAndCardDetails() {
             const hashedPassword = await bcryptjs.hash(user.password, saltRounds);
             const newUser = new User({ ...user, password: hashedPassword });
             await newUser.save();
-            console.log(`User ${user.username} saved successfully.`);
+            // console.log(`User ${user.username} saved successfully.`);
         }
 
         const savedUsers = await User.find({});
