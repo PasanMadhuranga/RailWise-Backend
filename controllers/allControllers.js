@@ -12,6 +12,7 @@ import WagonClass from "../models/wagonClass.model.js";
 import ExpressError from "../utils/ExpressError.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { get } from "mongoose";
 
 // get all the stations
 export const getAllStations = async (req, res, next) => {
@@ -87,8 +88,116 @@ export const getSchedules = async (req, res, next) => {
       finalSchedules.push({ schedule, fromHalt, toHalt });
     }
   }
+
+  // for each schedule in the finalSchedules array, get the number of booked seats of each class
+  for (let i = 0; i < finalSchedules.length; i++) {
+    const { schedule, fromHalt, toHalt } = finalSchedules[i];
+    const totalSeatsCount = await getTotalSeatsofEachClass(schedule.trainRef);
+    const bookedSeatsCount = await getBookedSeatsofEachClass(
+      schedule._id,
+      date,
+      fromHalt,
+      toHalt
+    );
+    finalSchedules[i].firstClassSeats = totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
+    finalSchedules[i].secondClassSeats = totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
+    finalSchedules[i].thirdClassSeats = totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
+  }
+
   return res.status(200).json(finalSchedules); // Send the finalSchedules array as the response
 };
+
+
+// get the total number of seats of each class of the given train
+const getTotalSeatsofEachClass = async (trainId) => {
+  const trainDetails = await Train.findById(trainId).populate({
+    path: "wagons",
+    select: "wagonClassRef seats",
+    populate: {
+      path: "wagonClassRef",
+      select: "name",
+    },
+  })
+  let firstClass = 0;
+  let secondClass = 0;
+  let thirdClass = 0;
+
+  for (let wagon of trainDetails.wagons) {
+    if (wagon.wagonClassRef.name === "first") {
+      firstClass += wagon.seats.length;
+    } else if (wagon.wagonClassRef.name === "second") {
+      secondClass += wagon.seats.length;
+    } else {
+      thirdClass += wagon.seats.length;
+    }
+  }
+  return { firstClass, secondClass, thirdClass };
+};
+
+// get the number of booked seats of each class of the given schedule on the given date
+const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => {
+  // get all the bookings of that schedule on that date
+  const AllbookingsOnDate = await Booking.find({
+    scheduleRef: scheduleId,
+    date: {
+      $gte: new Date(date),
+      $lt: new Date(date).setDate(new Date(date).getDate() + 1),
+    },
+    status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
+  })
+  .populate("startHalt endHalt")
+  .populate({
+    path: "seats",
+    populate: {
+      path: "wagonRef",
+      select: "wagonClassRef",
+      populate: {
+        path: "wagonClassRef",
+        select: "name",
+      },
+    },
+  });
+
+  // filter out the bookings that have a to stop number greater than the from stop number.
+  // that is, the bookings that are relevant to the journey from the from stop to the to stop
+  let relevantBookingsOnDate = [];
+  AllbookingsOnDate.forEach((booking) => {
+    if (
+      !(
+        (fromHalt.haltOrder < booking.startHalt.haltOrder &&
+          toHalt.haltOrder < booking.startHalt.haltOrder) ||
+        (fromHalt.haltOrder > booking.endHalt.haltOrder &&
+          toHalt.haltOrder > booking.endHalt.haltOrder)
+      )
+    ) {
+      relevantBookingsOnDate.push(booking);
+    }
+  });
+
+  // from all the relevant bookings, get all the booked seats
+  const relevantBookedSeats = relevantBookingsOnDate
+    .map((booking) => booking.seats)
+    .flat();
+  
+  const bookedSeatsCount = {
+    firstClass: 0,
+    secondClass: 0,
+    thirdClass: 0,
+  };
+  
+  // for each booked seat, increment the count of the respective class
+  relevantBookedSeats.forEach((seat) => {
+    if (seat.wagonRef.wagonClassRef.name === "first") {
+      bookedSeatsCount.firstClass++;
+    } else if (seat.wagonRef.wagonClassRef.name === "second") {
+      bookedSeatsCount.secondClass++;
+    } else {
+      bookedSeatsCount.thirdClass++;
+    }
+  });
+  return bookedSeatsCount;
+};
+
 
 // get the details of the schedule that the user has selected
 export const getScheduleDetails = async (req, res, next) => {
