@@ -23,12 +23,12 @@ export const getAllStations = async (req, res, next) => {
 // get all the schedules that run on the given date and have the given from and to stations
 export const getSchedules = async (req, res, next) => {
   // get the fromName, toName and date that user has entered in the search bar
-  const { fromName, toName, date, pax } = req.query;
+  const { fromStationId, toStationId, date } = req.query;
 
   // Find the station with the given fromName
-  const fromStation = await Station.findOne({ name: fromName });
+  const fromStation = await Station.findById(fromStationId);
   // Find the station with the given toName
-  const toStation = await Station.findOne({ name: toName });
+  const toStation = await Station.findById(toStationId);
 
   // If the fromStation or toStation is not found, throw an error
   if (!fromStation || !toStation) {
@@ -196,6 +196,43 @@ const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => 
     }
   });
   return bookedSeatsCount;
+};
+
+
+export const getClassesOfTrain = async (req, res, next) => {
+  const { scheduleId, fromHaltId, toHaltId } = req.query;
+  const fromHalt = await Halt.findById(fromHaltId).populate("stationRef");
+  const toHalt = await Halt.findById(toHaltId).populate("stationRef");
+  const schedule = await Schedule.findById(scheduleId).populate({
+    path: "trainRef",
+    populate: {
+      path: "wagons",
+      select: "wagonClassRef",
+      populate: {
+        path: "wagonClassRef",
+        select: "name",
+      },
+    },
+  });
+  let firstClassCount = 0;
+  let secondClassCount = 0;
+  let thirdClassCount = 0;
+  for (let wagon of schedule.trainRef.wagons) {
+    if (wagon.wagonClassRef.name === "first") {
+      firstClassCount++;
+    } else if (wagon.wagonClassRef.name === "second") {
+      secondClassCount++;
+    } else {
+      thirdClassCount++;
+    }
+  }
+  return res.status(200).json({
+    fromHalt,
+    toHalt,
+    firstClassCount,
+    secondClassCount,
+    thirdClassCount,
+  });
 };
 
 
