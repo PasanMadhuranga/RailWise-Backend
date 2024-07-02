@@ -31,6 +31,17 @@ async function populateWagons() {
   ]);
 
   console.log("Wagones successfully populated");
+
+  const wagons = await Wagon.find().populate("seats");
+
+  for (const wagon of wagons) {
+    for (const seat of wagon.seats) {
+      seat.wagonRef = wagon._id;
+      await seat.save();
+    }
+  }
+
+  console.log("respectively populated seat references");
 } catch (error) {
   console.error("Error populating wagons:", error);
 }
