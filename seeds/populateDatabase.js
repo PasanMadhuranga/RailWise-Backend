@@ -16,7 +16,7 @@ import populateBookings from "./booking.seeds.js";
 import populateTickets from "./ticket.seeds.js";
 import addSeatsToBooking from "./seatsToBooking.seeds.js";
 
-const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
+const dbUrl = process.env.DB_URL || "mongodb://localhost:27017/RailWise";
 
 // Connect to MongoDB
 mongoose
