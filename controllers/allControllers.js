@@ -12,7 +12,6 @@ import WagonClass from "../models/wagonClass.model.js";
 import ExpressError from "../utils/ExpressError.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { get } from "mongoose";
 
 // get all the stations
 export const getAllStations = async (req, res, next) => {
@@ -62,12 +61,7 @@ export const getSchedules = async (req, res, next) => {
       path: "trainRef",
       select: "name",
     })
-    .populate({
-      path: "sourceRef",
-    })
-    .populate({
-      path: "destinationRef",
-    })
+    .populate("destinationRef sourceRef")
     .select("-monday -tuesday -wednesday -thursday -friday -saturday -sunday"); // Select all fields except the days of the week
 
   const finalSchedules = [];
@@ -199,83 +193,74 @@ const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => 
 };
 
 
-export const getClassesOfTrain = async (req, res, next) => {
-  const { scheduleId, fromHaltId, toHaltId } = req.query;
+export const getDetailsOfSchedule = async (req, res, next) => {
+  const { scheduleId, fromHaltId, toHaltId, date } = req.query;
   const fromHalt = await Halt.findById(fromHaltId).populate("stationRef");
   const toHalt = await Halt.findById(toHaltId).populate("stationRef");
-  const schedule = await Schedule.findById(scheduleId).populate({
+  const schedule = await Schedule.findById(scheduleId).populate("sourceRef destinationRef").populate({
     path: "trainRef",
-    populate: {
-      path: "wagons",
-      select: "wagonClassRef",
-      populate: {
-        path: "wagonClassRef",
-        select: "name",
-      },
-    },
-  });
-  let firstClassCount = 0;
-  let secondClassCount = 0;
-  let thirdClassCount = 0;
-  for (let wagon of schedule.trainRef.wagons) {
-    if (wagon.wagonClassRef.name === "first") {
-      firstClassCount++;
-    } else if (wagon.wagonClassRef.name === "second") {
-      secondClassCount++;
-    } else {
-      thirdClassCount++;
-    }
-  }
-  return res.status(200).json({
-    fromHalt,
-    toHalt,
-    firstClassCount,
-    secondClassCount,
-    thirdClassCount,
-  });
-};
+    select: "name",
+  }).select("-monday -tuesday -wednesday -thursday -friday -saturday -sunday");
+  const totalSeatsCount = await getTotalSeatsofEachClass(schedule.trainRef);
+  const bookedSeatsCount = await getBookedSeatsofEachClass(scheduleId, date, fromHalt, toHalt);
+  const firstClassSeats = totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
+  const secondClassSeats = totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
+  const thirdClassSeats = totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
 
-
-// get the details of the schedule that the user has selected
-export const getScheduleDetails = async (req, res, next) => {
-  const { scheduleId, trainId, fromHalt, toHalt } = req.body;
-
-  const trainDetails = await Train.findById(trainId).populate({
-    path: "wagons",
-    select: "wagonClassRef",
-    populate: {
-      path: "wagonClassRef",
-      select: "name",
-    },
-  });
-  let firstClassCount = 0;
-  let secondClassCount = 0;
-  let thirdClassCount = 0;
-  for (let wagon of trainDetails.wagons) {
-    if (wagon.wagonClassRef.name === "first") {
-      firstClassCount++;
-    } else if (wagon.wagonClassRef.name === "second") {
-      secondClassCount++;
-    } else {
-      thirdClassCount++;
-    }
-  }
   const classesAndMultipliers = await WagonClass.find();
+
   return res.status(200).json({
-    scheduleId,
-    train: {
-      id: trainDetails._id,
-      name: trainDetails.name,
-      firstClassCount,
-      secondClassCount,
-      thirdClassCount,
-    },
+    schedule,
     fromHalt,
     toHalt,
+    firstClassSeats,
+    secondClassSeats,
+    thirdClassSeats,
     classesAndMultipliers,
   });
-  // return res.status(200).json(trainDetails);
 };
+
+
+// // get the details of the schedule that the user has selected
+// export const getScheduleDetails = async (req, res, next) => {
+//   const { scheduleId, trainId, fromHalt, toHalt } = req.body;
+
+//   const trainDetails = await Train.findById(trainId).populate({
+//     path: "wagons",
+//     select: "wagonClassRef",
+//     populate: {
+//       path: "wagonClassRef",
+//       select: "name",
+//     },
+//   });
+//   let firstClassCount = 0;
+//   let secondClassCount = 0;
+//   let thirdClassCount = 0;
+//   for (let wagon of trainDetails.wagons) {
+//     if (wagon.wagonClassRef.name === "first") {
+//       firstClassCount++;
+//     } else if (wagon.wagonClassRef.name === "second") {
+//       secondClassCount++;
+//     } else {
+//       thirdClassCount++;
+//     }
+//   }
+//   const classesAndMultipliers = await WagonClass.find();
+//   return res.status(200).json({
+//     scheduleId,
+//     train: {
+//       id: trainDetails._id,
+//       name: trainDetails.name,
+//       firstClassCount,
+//       secondClassCount,
+//       thirdClassCount,
+//     },
+//     fromHalt,
+//     toHalt,
+//     classesAndMultipliers,
+//   });
+//   // return res.status(200).json(trainDetails);
+// };
 
 // get the details of the wagons of the requested class of the train
 export const getWagonsOfClass = async (req, res, next) => {
