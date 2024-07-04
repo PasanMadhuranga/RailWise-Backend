@@ -93,14 +93,16 @@ export const getSchedules = async (req, res, next) => {
       fromHalt,
       toHalt
     );
-    finalSchedules[i].firstClassSeats = totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
-    finalSchedules[i].secondClassSeats = totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
-    finalSchedules[i].thirdClassSeats = totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
+    finalSchedules[i].firstClassSeats =
+      totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
+    finalSchedules[i].secondClassSeats =
+      totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
+    finalSchedules[i].thirdClassSeats =
+      totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
   }
 
   return res.status(200).json(finalSchedules); // Send the finalSchedules array as the response
 };
-
 
 // get the total number of seats of each class of the given train
 const getTotalSeatsofEachClass = async (trainId) => {
@@ -111,7 +113,7 @@ const getTotalSeatsofEachClass = async (trainId) => {
       path: "wagonClassRef",
       select: "name",
     },
-  })
+  });
   let firstClass = 0;
   let secondClass = 0;
   let thirdClass = 0;
@@ -129,7 +131,12 @@ const getTotalSeatsofEachClass = async (trainId) => {
 };
 
 // get the number of booked seats of each class of the given schedule on the given date
-const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => {
+const getBookedSeatsofEachClass = async (
+  scheduleId,
+  date,
+  fromHalt,
+  toHalt
+) => {
   // get all the bookings of that schedule on that date
   const AllbookingsOnDate = await Booking.find({
     scheduleRef: scheduleId,
@@ -139,18 +146,18 @@ const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => 
     },
     status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
   })
-  .populate("startHalt endHalt")
-  .populate({
-    path: "seats",
-    populate: {
-      path: "wagonRef",
-      select: "wagonClassRef",
+    .populate("startHalt endHalt")
+    .populate({
+      path: "seats",
       populate: {
-        path: "wagonClassRef",
-        select: "name",
+        path: "wagonRef",
+        select: "wagonClassRef",
+        populate: {
+          path: "wagonClassRef",
+          select: "name",
+        },
       },
-    },
-  });
+    });
 
   // filter out the bookings that have a to stop number greater than the from stop number.
   // that is, the bookings that are relevant to the journey from the from stop to the to stop
@@ -172,13 +179,13 @@ const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => 
   const relevantBookedSeats = relevantBookingsOnDate
     .map((booking) => booking.seats)
     .flat();
-  
+
   const bookedSeatsCount = {
     firstClass: 0,
     secondClass: 0,
     thirdClass: 0,
   };
-  
+
   // for each booked seat, increment the count of the respective class
   relevantBookedSeats.forEach((seat) => {
     if (seat.wagonRef.wagonClassRef.name === "first") {
@@ -192,20 +199,30 @@ const getBookedSeatsofEachClass = async (scheduleId, date, fromHalt, toHalt) => 
   return bookedSeatsCount;
 };
 
-
 export const getDetailsOfSchedule = async (req, res, next) => {
   const { scheduleId, fromHaltId, toHaltId, date } = req.query;
   const fromHalt = await Halt.findById(fromHaltId).populate("stationRef");
   const toHalt = await Halt.findById(toHaltId).populate("stationRef");
-  const schedule = await Schedule.findById(scheduleId).populate("sourceRef destinationRef").populate({
-    path: "trainRef",
-    select: "name",
-  }).select("-monday -tuesday -wednesday -thursday -friday -saturday -sunday");
+  const schedule = await Schedule.findById(scheduleId)
+    .populate("sourceRef destinationRef")
+    .populate({
+      path: "trainRef",
+      select: "name",
+    })
+    .select("-monday -tuesday -wednesday -thursday -friday -saturday -sunday");
   const totalSeatsCount = await getTotalSeatsofEachClass(schedule.trainRef);
-  const bookedSeatsCount = await getBookedSeatsofEachClass(scheduleId, date, fromHalt, toHalt);
-  const firstClassSeats = totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
-  const secondClassSeats = totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
-  const thirdClassSeats = totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
+  const bookedSeatsCount = await getBookedSeatsofEachClass(
+    scheduleId,
+    date,
+    fromHalt,
+    toHalt
+  );
+  const firstClassSeats =
+    totalSeatsCount.firstClass - bookedSeatsCount.firstClass;
+  const secondClassSeats =
+    totalSeatsCount.secondClass - bookedSeatsCount.secondClass;
+  const thirdClassSeats =
+    totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
 
   const classesAndMultipliers = await WagonClass.find();
 
@@ -219,7 +236,6 @@ export const getDetailsOfSchedule = async (req, res, next) => {
     classesAndMultipliers,
   });
 };
-
 
 // // get the details of the schedule that the user has selected
 // export const getScheduleDetails = async (req, res, next) => {
@@ -453,7 +469,10 @@ export const register = async (req, res, next) => {
       gender,
     });
     await newUser.save();
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
     const { password: hashed, ...restOfUser } = newUser._doc;
     res
       .cookie("access_token", token, { httpOnly: true })
@@ -470,8 +489,10 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const { emailOrUsername, password } = req.body;
+  const user = await User.findOne({
+    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+  });
   if (!user) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
@@ -479,7 +500,9 @@ export const login = async (req, res, next) => {
   if (!isMatch) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
   const { password: hashed, ...restOfUser } = user._doc;
   res
     .cookie("access_token", token, { httpOnly: true })
