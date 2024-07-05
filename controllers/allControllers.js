@@ -433,11 +433,62 @@ export const getPopularRoutes = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "schedules",
+          localField: "startHaltDetails.scheduleRef",
+          foreignField: "_id",
+          as: "startHaltSchedule",
+        },
+      },
+      {
+        $lookup: {
+          from: "schedules",
+          localField: "endHaltDetails.scheduleRef",
+          foreignField: "_id",
+          as: "endHaltSchedule",
+        },
+      },
+      {
+        $unwind: "$startHaltSchedule",
+      },
+      {
+        $unwind: "$endHaltSchedule",
+      },
+      {
+        $lookup: {
+          from: "trains",
+          localField: "startHaltSchedule.trainRef",
+          foreignField: "_id",
+          as: "startHaltTrain",
+        },
+      },
+      {
+        $lookup: {
+          from: "trains",
+          localField: "endHaltSchedule.trainRef",
+          foreignField: "_id",
+          as: "endHaltTrain",
+        },
+      },
+      {
         $project: {
           startHalt: "$startHaltDetails",
           endHalt: "$endHaltDetails",
           startHaltStation: { $arrayElemAt: ["$startHaltStation", 0] },
           endHaltStation: { $arrayElemAt: ["$endHaltStation", 0] },
+          startHaltTrain: { $arrayElemAt: ["$startHaltTrain", 0] },
+          endHaltTrain: { $arrayElemAt: ["$endHaltTrain", 0] },
+          count: 1,
+        },
+      },
+      {
+        $project: {
+          startHalt: 1,
+          endHalt: 1,
+          startHaltStation: 1,
+          endHaltStation: 1,
+          startHaltTrainName: "$startHaltTrain.name",
+          endHaltTrainName: "$endHaltTrain.name",
           count: 1,
         },
       },
