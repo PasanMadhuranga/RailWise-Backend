@@ -367,6 +367,62 @@ export const getWagonsOfClass = async (req, res, next) => {
   });
 };
 
+
+// get popular routes
+export const getPopularRoutes = async (req, res, next) => {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const popularRoutes = await Booking.aggregate([
+    {
+      $match: {
+        date: { $gte: thirtyDaysAgo },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          startHalt: "$startHalt",
+          endHalt: "$endHalt",
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 },
+    },
+    {
+      $limit: 5,
+    },
+    {
+      $lookup: {
+        from: "halts",
+        localField: "_id.startHalt",
+        foreignField: "_id",
+        as: "startHaltDetails",
+      },
+    },
+    {
+      $lookup: {
+        from: "halts",
+        localField: "_id.endHalt",
+        foreignField: "_id",
+        as: "endHaltDetails",
+      },
+    },
+    {
+      $project: {
+        startHalt: { $arrayElemAt: ["$startHaltDetails", 0] },
+        endHalt: { $arrayElemAt: ["$endHaltDetails", 0] },
+        count: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({ popularRoutes });
+};
+
+
 // create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
   const {
