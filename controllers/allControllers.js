@@ -375,46 +375,46 @@ export const getPopularRoutes = async (req, res, next) => {
 
     const popularRoutes = await Booking.aggregate([
       {
-        $match: {
+        $match: { // filter out the bookings that are made in the last 30 days
           date: { $gte: thirtyDaysAgo },
         },
       },
       {
-        $group: {
+        $group: { // group the bookings by the startHalt and endHalt
           _id: {
             startHalt: "$startHalt",
             endHalt: "$endHalt",
           },
-          count: { $sum: 1 },
+          count: { $sum: 1 }, // count the number of bookings for each group
         },
       },
       {
-        $sort: { count: -1 },
+        $sort: { count: -1 }, // sort the groups in descending order of the count
       },
       {
-        $limit: 5,
+        $limit: 5, // get only the top 5 groups
       },
       {
-        $lookup: {
-          from: "halts",
-          localField: "_id.startHalt",
-          foreignField: "_id",
-          as: "startHaltDetails",
+        $lookup: { // get the details of the startHalt from the halts collection
+          from: "halts", // collection name where we are looking for the details
+          localField: "_id.startHalt", // field in the current collection
+          foreignField: "_id", // field in the halts collection
+          as: "startHaltDetails", // name of the field where the details will be stored
         },
       },
       {
-        $lookup: {
-          from: "halts",
-          localField: "_id.endHalt",
-          foreignField: "_id",
-          as: "endHaltDetails",
+        $lookup: { // get the details of the endHalt from the halts collection
+          from: "halts", // collection name where we are looking for the details
+          localField: "_id.endHalt", // field in the current collection
+          foreignField: "_id", // field in the halts collection
+          as: "endHaltDetails", // name of the field where the details will be stored
         },
       },
       {
-        $unwind: "$startHaltDetails",
+        $unwind: "$startHaltDetails", // destructure the startHaltDetails array. this is necessary because $lookup returns an array of results even if there is only one result
       },
       {
-        $unwind: "$endHaltDetails",
+        $unwind: "$endHaltDetails", // destructure the endHaltDetails array. this is necessary because $lookup returns an array of results even if there is only one result
       },
       {
         $lookup: {
@@ -455,14 +455,15 @@ export const getPopularRoutes = async (req, res, next) => {
         $unwind: "$trainDetails",
       },
       {
-        $project: {
-          _id: 0,
-          startHaltStation: { $arrayElemAt: ["$startHaltStation", 0] },
-          endHaltStation: { $arrayElemAt: ["$endHaltStation", 0] },
-          train: {
+        $project: { // project the fields that we want in the final result
+          _id: 0, // exclude the _id field from the result
+          startHaltStation: { $arrayElemAt: ["$startHaltStation", 0] }, // get the first element of the startHaltStation array
+          endHaltStation: { $arrayElemAt: ["$endHaltStation", 0] }, // get the first element of the endHaltStation array
+          train: { // create a train object with the train details
             _id: "$trainDetails._id",
             name: "$trainDetails.name",
           },
+          count: 1, // include the count field in the result
         },
       },
     ]);
