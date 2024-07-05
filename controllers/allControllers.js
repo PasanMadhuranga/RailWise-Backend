@@ -437,59 +437,32 @@ export const getPopularRoutes = async (req, res, next) => {
           from: "schedules",
           localField: "startHaltDetails.scheduleRef",
           foreignField: "_id",
-          as: "startHaltSchedule",
+          as: "scheduleDetails",
         },
       },
       {
-        $lookup: {
-          from: "schedules",
-          localField: "endHaltDetails.scheduleRef",
-          foreignField: "_id",
-          as: "endHaltSchedule",
-        },
-      },
-      {
-        $unwind: "$startHaltSchedule",
-      },
-      {
-        $unwind: "$endHaltSchedule",
+        $unwind: "$scheduleDetails",
       },
       {
         $lookup: {
           from: "trains",
-          localField: "startHaltSchedule.trainRef",
+          localField: "scheduleDetails.trainRef",
           foreignField: "_id",
-          as: "startHaltTrain",
+          as: "trainDetails",
         },
       },
       {
-        $lookup: {
-          from: "trains",
-          localField: "endHaltSchedule.trainRef",
-          foreignField: "_id",
-          as: "endHaltTrain",
-        },
+        $unwind: "$trainDetails",
       },
       {
         $project: {
-          startHalt: "$startHaltDetails",
-          endHalt: "$endHaltDetails",
+          _id: 0,
           startHaltStation: { $arrayElemAt: ["$startHaltStation", 0] },
           endHaltStation: { $arrayElemAt: ["$endHaltStation", 0] },
-          startHaltTrain: { $arrayElemAt: ["$startHaltTrain", 0] },
-          endHaltTrain: { $arrayElemAt: ["$endHaltTrain", 0] },
-          count: 1,
-        },
-      },
-      {
-        $project: {
-          startHalt: 1,
-          endHalt: 1,
-          startHaltStation: 1,
-          endHaltStation: 1,
-          startHaltTrainName: "$startHaltTrain.name",
-          endHaltTrainName: "$endHaltTrain.name",
-          count: 1,
+          train: {
+            _id: "$trainDetails._id",
+            name: "$trainDetails.name",
+          },
         },
       },
     ]);
