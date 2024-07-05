@@ -371,55 +371,79 @@ export const getWagonsOfClass = async (req, res, next) => {
 // get popular routes
 export const getPopularRoutes = async (req, res, next) => {
   const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const popularRoutes = await Booking.aggregate([
-    {
-      $match: {
-        date: { $gte: thirtyDaysAgo },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          startHalt: "$startHalt",
-          endHalt: "$endHalt",
+    const popularRoutes = await Booking.aggregate([
+      {
+        $match: {
+          date: { $gte: thirtyDaysAgo },
         },
-        count: { $sum: 1 },
       },
-    },
-    {
-      $sort: { count: -1 },
-    },
-    {
-      $limit: 5,
-    },
-    {
-      $lookup: {
-        from: "halts",
-        localField: "_id.startHalt",
-        foreignField: "_id",
-        as: "startHaltDetails",
+      {
+        $group: {
+          _id: {
+            startHalt: "$startHalt",
+            endHalt: "$endHalt",
+          },
+          count: { $sum: 1 },
+        },
       },
-    },
-    {
-      $lookup: {
-        from: "halts",
-        localField: "_id.endHalt",
-        foreignField: "_id",
-        as: "endHaltDetails",
+      {
+        $sort: { count: -1 },
       },
-    },
-    {
-      $project: {
-        startHalt: { $arrayElemAt: ["$startHaltDetails", 0] },
-        endHalt: { $arrayElemAt: ["$endHaltDetails", 0] },
-        count: 1,
+      {
+        $limit: 5,
       },
-    },
-  ]);
+      {
+        $lookup: {
+          from: "halts",
+          localField: "_id.startHalt",
+          foreignField: "_id",
+          as: "startHaltDetails",
+        },
+      },
+      {
+        $lookup: {
+          from: "halts",
+          localField: "_id.endHalt",
+          foreignField: "_id",
+          as: "endHaltDetails",
+        },
+      },
+      {
+        $unwind: "$startHaltDetails",
+      },
+      {
+        $unwind: "$endHaltDetails",
+      },
+      {
+        $lookup: {
+          from: "stations",
+          localField: "startHaltDetails.stationRef",
+          foreignField: "_id",
+          as: "startHaltStation",
+        },
+      },
+      {
+        $lookup: {
+          from: "stations",
+          localField: "endHaltDetails.stationRef",
+          foreignField: "_id",
+          as: "endHaltStation",
+        },
+      },
+      {
+        $project: {
+          startHalt: "$startHaltDetails",
+          endHalt: "$endHaltDetails",
+          startHaltStation: { $arrayElemAt: ["$startHaltStation", 0] },
+          endHaltStation: { $arrayElemAt: ["$endHaltStation", 0] },
+          count: 1,
+        },
+      },
+    ]);
 
-  res.status(200).json({ popularRoutes });
+    res.status(200).json({ popularRoutes });
 };
 
 
