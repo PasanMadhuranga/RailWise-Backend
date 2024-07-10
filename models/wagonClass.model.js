@@ -10,6 +10,10 @@ const wagonClassSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  features: {
+    type: [String], 
+    required: true,
+  },
 });
 
 const WagonClass = mongoose.model("WagonClass", wagonClassSchema);
