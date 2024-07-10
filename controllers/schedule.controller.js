@@ -218,7 +218,7 @@ export const getWagonsOfClass = async (req, res, next) => {
       allSeatsofCurrWagon.includes(seat._id.toString())
     );
     // add the booked seats to the coach object
-    requestedClassWagons[i].alreadyBookedSeats = bookedSeatsofCurrWagon;
+    requestedClassWagons[i].alreadyBookedSeats = bookedSeatsofCurrWagon.map((seat) => seat._id);
   }
 
   res.status(200).json({
