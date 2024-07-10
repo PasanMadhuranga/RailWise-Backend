@@ -3,6 +3,7 @@ import Schedule from "../models/schedule.model.js";
 import Halt from "../models/halt.model.js";
 import Station from "../models/station.model.js";
 import Booking from "../models/booking.model.js";
+import WagonClass from "../models/wagonClass.model.js";
 
 import ExpressError from "../utils/ExpressError.utils.js";
 
