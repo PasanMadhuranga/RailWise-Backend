@@ -201,7 +201,7 @@ const populateSeats = async () => {
         position: [seat.x, seat.y],
       })), // second class of Rajarata Rajina
 
-      ...firstSeats.map((seat) => ({
+      ...secondSeats.map((seat) => ({
         name: seat.id,
         position: [seat.x, seat.y],
       })), // second class of Uttara Devi
