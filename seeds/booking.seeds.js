@@ -1,6 +1,7 @@
 import Schedule from '../models/schedule.model.js';
 import User from '../models/user.model.js';
 import Halt from '../models/halt.model.js';
+import Train from '../models/train.model.js';
 import Booking from '../models/booking.model.js';
 
 
@@ -17,7 +18,16 @@ const populateBookings = async () => {
     
         // Randomly select a schedule
         const schedule = schedules[Math.floor(Math.random() * schedules.length)];
-    
+        const train = await Train.findById(schedule.trainRef).populate("wagons")
+        const randomWagon = train.wagons[Math.floor(Math.random() * train.wagons.length)];
+        const getRandomSeats = (wagon) => {
+            const seats = [];
+            const randomSeatCount = Math.floor(Math.random() * 5) + 1;
+            for (let i = 0; i < randomSeatCount; i++) {
+                seats.push(wagon.seats[Math.floor(Math.random() * wagon.seats.length)]);
+            }
+            return seats;
+        };
         // Get all stops for the schedule
         const halts = await Halt.find({ scheduleRef: schedule._id });
 
@@ -47,6 +57,7 @@ const populateBookings = async () => {
             endHalt: endHalt._id,
             totalFare: Math.abs(startHalt.price - endHalt.price),
             status: 'approved',
+            seats: getRandomSeats(randomWagon),
         });
     }
     console.log('Bookings successfully populated');

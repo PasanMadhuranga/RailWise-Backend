@@ -11,18 +11,19 @@ import populateRajaRataHalts from "./halt.RajaRata.seeds.js";
 import populateRajaRataReturnHalts from "./halt.RajaRataReturn.seeds.js";
 import populateUttaraHalts from "./halt.Uttara.seeds.js";
 import populateUttaraReturnHalts from "./halt.UttaraReturn.seeds.js";
-import populateUsersAndCardDetails from "./User&Card.seeds.js";
+import populateUsersAndCardDetails from "./user.seeds.js";
 import populateBookings from "./booking.seeds.js";
-import populateTickets from "./ticket.seeds.js";
-import addSeatsToBooking from "./seatsToBooking.seeds.js";
 
-const dbUrl = process.env.DB_URL || "mongodb://localhost:27017/RailWise";
+// const dbUrl = process.env.DB_URL || "mongodb://localhost:27017/RailWise";
+// const dbUrl = "mongodb://localhost:27017/RailWise";
+const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
 
 // Connect to MongoDB
 mongoose
   .connect(dbUrl)
   .then(() => {
     console.log("----- Connected to MongoDB -----");
+    populateDatabase();
   })
   .catch((err) => {
     console.error("Error connecting to MongoDB", err);
@@ -44,8 +45,6 @@ const populateDatabase = async () => {
     await populateUttaraReturnHalts();
     await populateUsersAndCardDetails();
     await populateBookings();
-    await populateTickets();
-    await addSeatsToBooking();
 
     console.log("----- Database successfully populated -----");
   } catch (error) {
@@ -54,5 +53,3 @@ const populateDatabase = async () => {
     mongoose.connection.close();
   }
 };
-
-populateDatabase();

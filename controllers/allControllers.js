@@ -1,7 +1,6 @@
 import Schedule from "../models/schedule.model.js";
 import Halt from "../models/halt.model.js";
 import Train from "../models/train.model.js";
-import Ticket from "../models/ticket.model.js";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import Station from "../models/station.model.js";
@@ -497,16 +496,6 @@ export const createPendingBooking = async (req, res, next) => {
     pendingTime, // store the expiry time of the hold
   });
   await booking.save();
-  for (let passenger of passengerDetails) {
-    const ticket = new Ticket({
-      bookingRef: booking._id,
-      name: passenger.name,
-      age: passenger.age,
-      seatRef: passenger.seatId,
-      ticketPrice: tripFare,
-    });
-    await ticket.save();
-  }
   return res
     .status(200)
     .json({ bookingId: booking._id, expireTime: pendingTime });

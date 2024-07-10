@@ -1,18 +1,7 @@
 import Train from "../models/train.model.js";
 import Schedule from "../models/schedule.model.js";
-import Station from "../models/station.model.js";
 
-const journeys = [
-  { source: "Beliaththa", destination: "Maradana" },
-  { source: "Beliaththa", destination: "Anuradhapura" },
-  { source: "Colombo Fort", destination: "Kankesanthurai" },
-];
-
-const returnJourneys = [
-  { source: "Maradana", destination: "Beliaththa" },
-  { source: "Anuradhapura", destination: "Beliaththa" },
-  { source: "Kankesanthurai", destination: "Colombo Fort" },
-];
+const scheduleTypes = ["express", "slow"];
 
 // Function to create schedule data
 const populateSchedules = async () => {
@@ -62,22 +51,17 @@ const populateSchedules = async () => {
     for (let i = 0; i < trains.length; i++) {
       const randomSchedule =
         scheduleDays[Math.floor(Math.random() * scheduleDays.length)];
-        const srcStation = await Station.findOne({ name: journeys[i].source });
-        const destStation = await Station.findOne({ name: journeys[i].destination });
+
         schedules.push({
           trainRef: trains[i]._id,
-          sourceRef: srcStation._id,
-          destinationRef: destStation._id,
           ...randomSchedule,
+          scheduleType: scheduleTypes[Math.floor(Math.random() * scheduleTypes.length)],
         });
 
-        const returnSrcStation = await Station.findOne({ name: returnJourneys[i].source });
-        const returnDestStation = await Station.findOne({ name: returnJourneys[i].destination });
         schedules.push({
           trainRef: trains[i]._id,
-          sourceRef: returnSrcStation._id,
-          destinationRef: returnDestStation._id,
           ...randomSchedule,
+          scheduleType: scheduleTypes[Math.floor(Math.random() * scheduleTypes.length)],
         });
     }
 
