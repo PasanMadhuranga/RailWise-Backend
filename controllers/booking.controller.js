@@ -1,7 +1,6 @@
-import Ticket from "../models/ticket.model.js";
 import Booking from "../models/booking.model.js";
+import ExpressError from "../utils/ExpressError.utils.js";
 
-import ExpressError from "../utils/ExpressError.js";
 
 // create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
@@ -28,16 +27,6 @@ export const createPendingBooking = async (req, res, next) => {
     pendingTime, // store the expiry time of the hold
   });
   await booking.save();
-  for (let passenger of passengerDetails) {
-    const ticket = new Ticket({
-      bookingRef: booking._id,
-      name: passenger.name,
-      age: passenger.age,
-      seatRef: passenger.seatId,
-      ticketPrice: tripFare,
-    });
-    await ticket.save();
-  }
   return res
     .status(200)
     .json({ bookingId: booking._id, expireTime: pendingTime });

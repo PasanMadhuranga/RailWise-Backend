@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import express from "express";
-import allRoutes from "./routes/allRoutes.js";
+import scheduleRoutes from "./routes/schedule.route.js";
+import stationRoutes from "./routes/station.route.js";
+import userRoutes from "./routes/user.route.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -30,7 +32,9 @@ app.use(cors({
   origin: 'http://localhost:5173', // Your frontend URL
   credentials: true, // Allow credentials (cookies) to be included in requests
 }));
-app.use("/api", allRoutes);
+app.use("/api/stations", stationRoutes);
+app.use("/api/schedules", scheduleRoutes);
+app.use("/api/users", userRoutes);
 
 // Periodic task to release expired booking holds
 // setInterval(releaseExpiredHolds, 60 * 1000); // Run every minute

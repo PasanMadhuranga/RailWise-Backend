@@ -48,7 +48,6 @@ const stationNames = [
     "Thambuttegama",
     "Vavuniya",
     "Mankulam",
-    "Ariyiya Nagar",
     "Kilinochchi",
     "Pallai",
     "Kodikamam",
