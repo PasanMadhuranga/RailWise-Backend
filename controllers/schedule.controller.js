@@ -4,6 +4,7 @@ import Halt from "../models/halt.model.js";
 import Station from "../models/station.model.js";
 import Booking from "../models/booking.model.js";
 import WagonClass from "../models/wagonClass.model.js";
+import Train from "../models/train.model.js";
 
 import ExpressError from "../utils/ExpressError.utils.js";
 
@@ -147,33 +148,28 @@ export const getWagonsOfClass = async (req, res, next) => {
   const {
     trainId,
     scheduleId,
-    fromHalt,
-    toHalt,
+    fromHaltId,
+    toHaltId,
     date,
-    requestedWagonClass,
-  } = req.body;
+    requestedClassId,
+  } = req.query;
 
   // get the train with the given trainId
   // populate the wagons field and the wagonClassRef field of each wagon
   const train = await Train.findById(trainId)
     .populate({
       path: "wagons",
-      populate: [
-        {
-          path: "wagonClassRef",
-          select: "name",
-        },
-        {
-          path: "seats",
-        },
-      ],
+      populate: {
+        path: "seats",
+      }
     })
     .lean(); // Use lean() to get plain JavaScript objects instead of Mongoose documents
+
 
   // from all the wagons in the train, filter out the wagons that have the requested coach type
   const requestedClassWagons = [];
   train.wagons.forEach((wagon) => {
-    if (wagon.wagonClassRef.name === requestedWagonClass) {
+    if (wagon.wagonClassRef.equals(requestedClassId)) {
       requestedClassWagons.push(wagon);
     }
   });
@@ -187,6 +183,10 @@ export const getWagonsOfClass = async (req, res, next) => {
     },
     status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
   }).populate("startHalt endHalt seats");
+
+  // get the from halt and to halt details
+  const fromHalt = await Halt.findById(fromHaltId);
+  const toHalt = await Halt.findById(toHaltId);
 
   // filter out the bookings that have a to stop number greater than the from stop number.
   // that is, the bookings that are relevant to the journey from the from stop to the to stop
@@ -223,9 +223,6 @@ export const getWagonsOfClass = async (req, res, next) => {
 
   res.status(200).json({
     requestedClassWagons,
-    fromHalt,
-    toHalt,
-    date,
   });
 };
 
