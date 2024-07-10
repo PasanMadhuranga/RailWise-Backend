@@ -16,18 +16,18 @@ async function populateWagons() {
   const thirdClassType = wagonClasses.find((type) => type.name === "third");
 
   await Wagon.insertMany([
-    { wagonNumber: 1, wagonClassRef: firstClassType._id, seats: seatsArr.slice(0, 20).map(seat => seat._id) },
-    { wagonNumber: 2, wagonClassRef: secondClassType._id, seats: seatsArr.slice(20, 40).map(seat => seat._id) },
-    { wagonNumber: 3, wagonClassRef: secondClassType._id, seats: seatsArr.slice(40, 60).map(seat => seat._id) },
-    { wagonNumber: 4, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(60, 80).map(seat => seat._id) },
-    { wagonNumber: 5, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(80, 100).map(seat => seat._id) },
+    { wagonNumber: 1, wagonClassRef: firstClassType._id, seats: seatsArr.slice(0, 32).map(seat => seat._id) },
+    { wagonNumber: 2, wagonClassRef: secondClassType._id, seats: seatsArr.slice(32, 72).map(seat => seat._id) },
+    { wagonNumber: 3, wagonClassRef: secondClassType._id, seats: seatsArr.slice(72, 112).map(seat => seat._id) },
+    { wagonNumber: 4, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(112, 172).map(seat => seat._id) },
+    { wagonNumber: 5, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(172, 232).map(seat => seat._id) },
 
-    { wagonNumber: 1, wagonClassRef: firstClassType._id, seats: seatsArr.slice(100, 120).map(seat => seat._id) },
-    { wagonNumber: 2, wagonClassRef: secondClassType._id, seats: seatsArr.slice(120, 140).map(seat => seat._id) },
-    { wagonNumber: 3, wagonClassRef: secondClassType._id, seats: seatsArr.slice(140, 160).map(seat => seat._id) },
+    { wagonNumber: 1, wagonClassRef: firstClassType._id, seats: seatsArr.slice(232, 264).map(seat => seat._id) },
+    { wagonNumber: 2, wagonClassRef: secondClassType._id, seats: seatsArr.slice(264, 304).map(seat => seat._id) },
+    { wagonNumber: 3, wagonClassRef: secondClassType._id, seats: seatsArr.slice(304, 344).map(seat => seat._id) },
 
-    { wagonNumber: 1, wagonClassRef: secondClassType._id, seats: seatsArr.slice(160, 180).map(seat => seat._id) },
-    { wagonNumber: 2, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(180, 200).map(seat => seat._id) },
+    { wagonNumber: 1, wagonClassRef: secondClassType._id, seats: seatsArr.slice(344, 384).map(seat => seat._id) },
+    { wagonNumber: 2, wagonClassRef: thirdClassType._id, seats: seatsArr.slice(384, 444).map(seat => seat._id) },
   ]);
 
   console.log("Wagones successfully populated");
