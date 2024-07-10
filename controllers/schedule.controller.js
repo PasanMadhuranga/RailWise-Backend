@@ -118,16 +118,27 @@ export const getDetailsOfSchedule = async (req, res, next) => {
   const thirdClassSeats =
     totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
 
-  const classesAndMultipliers = await WagonClass.find();
+  const classesDetails = await WagonClass.find().lean();
+
+  classesDetails.forEach((classDetail) => {
+    switch (classDetail.name) {
+      case "first":
+        classDetail.availableSeats = firstClassSeats;
+        break;
+      case "second":
+        classDetail.availableSeats = secondClassSeats;
+        break;
+      case "third":
+        classDetail.availableSeats = thirdClassSeats;
+        break;
+    }
+  });
 
   return res.status(200).json({
     schedule,
     fromHalt,
     toHalt,
-    firstClassSeats,
-    secondClassSeats,
-    thirdClassSeats,
-    classesAndMultipliers,
+    classesDetails,
   });
 };
 
