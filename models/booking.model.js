@@ -4,7 +4,6 @@ const bookingSchema = new mongoose.Schema({
   userRef: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   scheduleRef: {
     type: mongoose.Schema.Types.ObjectId,
