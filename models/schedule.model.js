@@ -34,15 +34,10 @@ const scheduleSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    sourceRef: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Station",
+    scheduleType: {
+        type: String,
         required: true,
-    },
-    destinationRef: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Station",
-        required: true,
+        enum: ["express", "slow"],
     },
 });    
 
