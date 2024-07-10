@@ -34,7 +34,7 @@ app.use(cors({
 }));
 app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api/user", userRoutes);
 
 // Periodic task to release expired booking holds
 // setInterval(releaseExpiredHolds, 60 * 1000); // Run every minute
