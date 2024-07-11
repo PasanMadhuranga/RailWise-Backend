@@ -19,39 +19,176 @@ const generateETickets = async (booking) => {
 
     // Adjust the coordinates as per your template layout
     firstPage.drawText(`${booking.date.split("T")[0]}`, {
-      x: 80,
+      x: 70,
       y: 25,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.date.split("T")[0]}`, {
-      x: 400,
+      x: 394,
       y: 27,
       size: fontSize - 3,
       color,
     });
 
     firstPage.drawText(`${booking.from.name}`, {
-      x: 80,
-      y: 60,
+      x: 70,
+      y: 62,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.from.name}`, {
-        x: 400,
-        y: 67,
+        x: 394,
+        y: 65,
         size: fontSize - 3,
         color,
       });
 
     firstPage.drawText(`${booking.train}`, {
-        x: 80,
-        y: 87,
+        x: 70,
+        y: 98,
         size: fontSize,
         color,
       });
+    firstPage.drawText(`${booking.train}`, {
+      x: 394,
+      y: 101,
+      size: fontSize - 3,
+      color,
+    });
+
+    firstPage.drawText(`${booking._id}`, {
+        x: 68,
+        y: 137,
+        size: fontSize,
+        color,
+      });
+    firstPage.drawText(`${booking._id}`, {
+      x: 393,
+      y: 138,
+      size: fontSize - 3,
+      color,
+    });
+    firstPage.drawText(`${booking.from.departureTime}`, {
+      x: 182,
+      y: 25,
+      size: fontSize,
+      color,
+    });
+    firstPage.drawText(`${booking.from.departureTime}`, {
+      x: 469,
+      y: 27,
+      size: fontSize - 3,
+      color,
+    });
+    firstPage.drawText(`${booking.from.platformNumber}`, {
+      x: 184,
+      y: 98,
+      size: fontSize,
+      color,
+    });
+
+    firstPage.drawText(`${booking.from.platformNumber}`, {
+      x: 467,
+      y: 101,
+      size: fontSize-3,
+      color,
+    });
+
+    firstPage.drawText(`${booking.class}`, {
+      x: 233,
+      y: 138,
+      size: fontSize,
+      color,
+    });
+
+    firstPage.drawText(`${booking.to.arrivalTime}`, {
+      x: 261,
+      y: 24,
+      size: fontSize,
+      color,
+    }); 
+
+    firstPage.drawText(`${booking.to.arrivalTime}`, {
+      x: 546,
+      y: 27,
+      size: fontSize - 3,
+      color,
+    });
+
+    firstPage.drawText(`${booking.to.name}`, {
+      x: 261,
+      y: 62,
+      size: fontSize,
+      color,
+    }); 
+
+    firstPage.drawText(`${booking.to.name}`, {
+      x: 514,
+      y: 65,
+      size: fontSize - 3,
+      color,
+    }); 
+
+    firstPage.drawText(`${seat.wagonNumber}`, {
+      x: 261,
+      y: 98,
+      size: fontSize,
+      color,
+    });
+
+    firstPage.drawText(`${seat.wagonNumber}`, {
+      x: 521,
+      y: 100,
+      size: fontSize - 3,
+      color,
+    });
+
+    
+    firstPage.drawText(`${seat.name}`, {
+      x: 340,
+      y: 98,
+      size: fontSize,
+      color,
+    });
+    firstPage.drawText(`${seat.name}`, {
+      x: 570,
+      y: 100,
+      size: fontSize - 3,
+      color,
+    });
+
+    firstPage.drawText(`${seat.amount}` + 'LKR', {
+      x: 295,
+      y: 137,
+      size: fontSize,
+      color,
+    });
+
+    firstPage.drawText(`${seat.amount}`+' LKR', {
+      x: 525,
+      y: 138,
+      size: fontSize - 3,
+      color,
+    });
+
+    
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
 
     const pdfBytes = await pdfDoc.save();
     pdfBuffers.push(pdfBytes);
