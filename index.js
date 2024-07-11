@@ -3,6 +3,7 @@ import express from "express";
 import scheduleRoutes from "./routes/schedule.route.js";
 import stationRoutes from "./routes/station.route.js";
 import userRoutes from "./routes/user.route.js";
+import bookingRoutes from "./routes/booking.route.js";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -34,6 +35,7 @@ app.use(cors({
 }));
 app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/user", userRoutes);
 
 // Periodic task to release expired booking holds

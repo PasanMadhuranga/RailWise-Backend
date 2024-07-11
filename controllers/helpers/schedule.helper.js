@@ -47,7 +47,14 @@ export const getBookedSeatsofEachClass = async (
     },
     status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
   })
-    .populate("startHalt endHalt")
+    .populate({
+      path: "startHalt",
+      select: "haltOrder",
+    })
+    .populate({
+      path: "endHalt",
+      select: "haltOrder",
+    })
     .populate({
       path: "seats",
       populate: {
@@ -99,3 +106,4 @@ export const getBookedSeatsofEachClass = async (
   });
   return bookedSeatsCount;
 };
+

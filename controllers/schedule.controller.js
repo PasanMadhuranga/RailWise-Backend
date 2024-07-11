@@ -8,7 +8,7 @@ import Train from "../models/train.model.js";
 
 import ExpressError from "../utils/ExpressError.utils.js";
 
-import { getTotalSeatsofEachClass, getBookedSeatsofEachClass } from "./helpers/schedules.helper.js";
+import { getTotalSeatsofEachClass, getBookedSeatsofEachClass } from "./helpers/schedule.helper.js";
 
 // get all the schedules that run on the given date and have the given from and to stations
 export const getSchedules = async (req, res, next) => {
