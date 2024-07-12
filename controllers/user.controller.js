@@ -9,10 +9,8 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import ExpressError from "../utils/ExpressError.utils.js";
 
-
 export const register = async (req, res, next) => {
-  const { username, email, phone, password, } =
-    req.body;
+  const { username, email, phone, password } = req.body;
   const hashedPassword = await bcryptjs.hash(password, 12);
   try {
     const newUser = new User({
@@ -53,9 +51,7 @@ export const login = async (req, res, next) => {
   if (!isMatch) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
   const { password: hashed, ...restOfUser } = user._doc;
   res
     .cookie("access_token", token, { httpOnly: true })
@@ -67,13 +63,30 @@ export const logout = async (req, res, next) => {
   res.clearCookie("access_token").json({ message: "Logged out" });
 };
 
-export const getProfile = async (req, res, next) => {
-  const user = await User.findById(req.user.id).select("-password");
-  res.status(200).json(user);
+export const updateProfile = async (req, res, next) => {
+  const { username, email, phone, oldPassword, newPassword } = req.body;
+  const user = await User.findById(req.userId);
+  const isMatch = await bcryptjs.compare(oldPassword, user.password);
+
+  if (!isMatch) {
+    throw new ExpressError("Invalid password", 400);
+  }
+
+  if (newPassword) {
+    const hashedPassword = await bcryptjs.hash(newPassword, 12);
+    user.password = hashedPassword;
+  }
+  user.username = username;
+  user.email = email;
+  user.phone = phone;
+  await user.save();
+
+  const { password: hashed, ...restOfUser } = user._doc;
+  res.status(200).json(restOfUser);
 };
 
 export const getBookingHistory = async (req, res, next) => {
-  const bookings = await Booking.find({ userRef: req.params.id })
+  const bookings = await Booking.find({ userRef: req.userId })
     .populate({
       path: "scheduleRef",
       select: "trainRef",
