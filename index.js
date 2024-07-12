@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
 import express from "express";
+
 import scheduleRoutes from "./routes/schedule.route.js";
 import stationRoutes from "./routes/station.route.js";
 import userRoutes from "./routes/user.route.js";
 import bookingRoutes from "./routes/booking.route.js";
+import { releaseExpiredPendingBookings } from "./controllers/helpers/booking.helper.js";
+
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -17,7 +20,6 @@ const app = express();
 // const dbUrl = process.env.DB_URL;
 const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
 
-
 mongoose
   .connect(dbUrl)
   .then(() => {
@@ -27,19 +29,20 @@ mongoose
     console.error("Error connecting to MongoDB", err);
   });
 
-
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173', // Your frontend URL
-  credentials: true, // Allow credentials (cookies) to be included in requests
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Your frontend URL
+    credentials: true, // Allow credentials (cookies) to be included in requests
+  })
+);
 app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/user", userRoutes);
 
 // Periodic task to release expired booking holds
-// setInterval(releaseExpiredHolds, 60 * 1000); // Run every minute
+setInterval(releaseExpiredPendingBookings, 60 * 1000); // Run every minute
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

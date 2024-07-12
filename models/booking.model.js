@@ -45,6 +45,10 @@ const bookingSchema = new mongoose.Schema({
   },
 });
 
+bookingSchema.virtual('ticketPrice').get(function() {
+  return this.totalFare / this.seats.length;
+});
+
 const Booking = mongoose.model("Booking", bookingSchema);
 
 export default Booking;
