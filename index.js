@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import express from "express";
+import cookieParser from "cookie-parser";
 
 import scheduleRoutes from "./routes/schedule.route.js";
 import stationRoutes from "./routes/station.route.js";
@@ -30,6 +31,7 @@ mongoose
   });
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:5173", // Your frontend URL
