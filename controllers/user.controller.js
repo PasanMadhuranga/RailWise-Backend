@@ -7,21 +7,19 @@ import Station from "../models/station.model.js";
 
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import ExpressError from "../utils/ExpressError.utils.js";
 
 
 export const register = async (req, res, next) => {
-  const { username, firstName, lastName, email, phone, password, gender } =
+  const { username, email, phone, password, } =
     req.body;
   const hashedPassword = await bcryptjs.hash(password, 12);
   try {
     const newUser = new User({
       username,
-      firstName,
-      lastName,
       email,
       phone,
       password: hashedPassword,
-      gender,
     });
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
@@ -35,9 +33,9 @@ export const register = async (req, res, next) => {
       .json(restOfUser);
   } catch (error) {
     if (error.keyValue.email) {
-      return res.status(400).json({ message: "Email already exists" });
+      throw new ExpressError("Email already exists", 400);
     } else if (error.keyValue.username) {
-      return res.status(400).json({ message: "Username already exists" });
+      throw new ExpressError("Username already exists", 400);
     }
     next(error);
   }
