@@ -12,7 +12,7 @@ const populateBookings = async () => {
     const users = await User.find({});
     const schedules = await Schedule.find({});
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 500; i++) {
         // Randomly select a user
         const user = users[Math.floor(Math.random() * users.length)];
     
@@ -48,11 +48,15 @@ const populateBookings = async () => {
             endHalt = halt1;
         }
 
+        // Get the start and end dates for the schedule
+        const startDate = new Date("2023-01-01");
+        const endDate = new Date("2024-12-31");
+
         // Create booking instances
         await Booking.create({
             userRef: user._id,
             scheduleRef: schedule._id,
-            date: new Date(),
+            date: new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime())),
             startHalt: startHalt._id,
             endHalt: endHalt._id,
             totalFare: Math.abs(startHalt.price - endHalt.price),
