@@ -6,6 +6,8 @@ import scheduleRoutes from "./routes/schedule.route.js";
 import stationRoutes from "./routes/station.route.js";
 import userRoutes from "./routes/user.route.js";
 import bookingRoutes from "./routes/booking.route.js";
+import adminRoutes from "./routes/admin.route.js";
+
 import { releaseExpiredPendingBookings } from "./controllers/helpers/booking.helper.js";
 
 import cors from "cors";
@@ -42,6 +44,7 @@ app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Periodic task to release expired booking holds
 setInterval(releaseExpiredPendingBookings, 60 * 1000); // Run every minute
