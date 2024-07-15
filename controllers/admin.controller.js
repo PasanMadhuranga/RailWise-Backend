@@ -60,20 +60,20 @@ export const getBookingsCount = async (req, res, next) => {
   }
 
   // Perform aggregation to get the booking count for each period
-const bookingsBreakdown = await Booking.aggregate([
+  const bookingsBreakdown = await Booking.aggregate([
     {
-        $match: matchStage,
+      $match: matchStage,
     },
     {
-        $group: {
-            _id: groupBy,
-            count: { $sum: 1 },
-        },
+      $group: {
+        _id: groupBy,
+        count: { $sum: 1 },
+      },
     },
     {
-        $sort: { "_id.year": 1, "_id.month": 1, "_id.week": 1 },
+      $sort: { "_id.year": 1, "_id.month": 1, "_id.week": 1 },
     },
-]);
+  ]);
 
   // Create a map from the aggregated results
   const breakdownMap = new Map(
@@ -81,10 +81,34 @@ const bookingsBreakdown = await Booking.aggregate([
   );
 
   // Generate the final result array including periods with zero bookings
-  const result = periods.map((period) => ({
-    _id: period,
-    count: breakdownMap.get(JSON.stringify(period)) || 0,
-  }));
+  const result = periods.map((period) => {
+    let periodLabel;
+    if (timeFrame === "yearly") {
+      periodLabel = `${period.year}`;
+    } else if (timeFrame === "monthly") {
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      periodLabel = `${period.year} ${monthNames[period.month - 1]}`;
+    } else if (timeFrame === "weekly") {
+      periodLabel = `${period.year} W${period.week}`;
+    }
+    return {
+      period: periodLabel,
+      count: breakdownMap.get(JSON.stringify(period)) || 0,
+    };
+  });
 
   // Return the result
   res
