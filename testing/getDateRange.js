@@ -16,7 +16,7 @@ function getDateRangeOfWeek(weekNo, year) {
 
 // Example Usage
 for (let i = 1; i <= 52; i++) {
-  const { startWeek, endWeek } = getDateRangeOfWeek(i, 2023);
+  const { startWeek, endWeek } = getDateRangeOfWeek(i, 2024);
   console.log(
     `Week ${i} of 2024 starts on  "${startWeek.toDateString()}"  and ends on  "${endWeek.toDateString()}"`
   );
