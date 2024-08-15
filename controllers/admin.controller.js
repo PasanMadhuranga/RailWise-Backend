@@ -3,16 +3,19 @@ import mongoose from "mongoose";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import ExpressError from "../utils/ExpressError.utils.js";
-import {generatePeriods, performAggregation, monthNames} from "./helpers/admin.helper.js";
-
+import {
+  generatePeriods,
+  performAggregation,
+  monthNames,
+} from "./helpers/admin.helper.js";
 
 export const getBookingsCount = async (req, res, next) => {
-  const { scheduleId, timeFrame } = req.params;
+  const { scheduleId, timeFrame, status } = req.params;
 
   const { periods, groupBy } = generatePeriods(timeFrame);
 
   // Prepare the match stage for aggregation
-  let matchStage = { status: "approved" }; // Default match stage with confirmed bookings
+  let matchStage = { status }; // Default match stage with confirmed bookings
   if (scheduleId !== "all") {
     // Validate scheduleId if it's not 'all'
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
@@ -38,37 +41,7 @@ export const getBookingsCount = async (req, res, next) => {
     .json({ success: true, scheduleId, timeFrame, bookingsBreakdown: result });
 };
 
-export const getCancelledBookingsCount = async (req, res, next) => {
-  const { scheduleId, timeFrame } = req.params;
 
-  const { periods, groupBy } = generatePeriods(timeFrame);
-
-  // Prepare the match stage for aggregation
-  let matchStage = { status: "cancelled" }; // Default match stage with cancelled bookings
-  if (scheduleId !== "all") {
-    // Validate scheduleId if it's not 'all'
-    if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
-      return new ExpressError("Invalid schedule ID", 400);
-    }
-    matchStage = { scheduleRef: new mongoose.Types.ObjectId(scheduleId) };
-  }
-
-  // Perform aggregation to get the booking count for each period
-  const result = await performAggregation(
-    Booking,
-    matchStage,
-    groupBy,
-    periods,
-    timeFrame,
-    { value: { $sum: 1 } },
-    "count"
-  );
-
-  // Return the result
-  res
-    .status(200)
-    .json({ success: true, scheduleId, timeFrame, bookingsBreakdown: result });
-};
 
 export const getTotalFare = async (req, res, next) => {
   const { scheduleId, timeFrame } = req.params;
@@ -200,21 +173,69 @@ export const getBookingClassDistribution = async (req, res, next) => {
       // For each period, return the counts for each class
       return {
         period: periodLabel,
-        // classes: ["first", "second", "third"].map((className) => ({
-        //   className,
-        //   count: breakdownMap.get(
-        //     JSON.stringify({ ...period, className })
-        //   ) || 0,
-        // })),
-        first: breakdownMap.get(JSON.stringify({ ...period, className: "first" })) || 0,
-        second: breakdownMap.get(JSON.stringify({ ...period, className: "second" })) || 0,
-        third: breakdownMap.get(JSON.stringify({ ...period, className: "third" })) || 0,
+        first:
+          breakdownMap.get(JSON.stringify({ ...period, className: "first" })) ||
+          0,
+        second:
+          breakdownMap.get(
+            JSON.stringify({ ...period, className: "second" })
+          ) || 0,
+        third:
+          breakdownMap.get(JSON.stringify({ ...period, className: "third" })) ||
+          0,
       };
     });
 
     // Return the result
-    res.status(200).json({ success: true, scheduleId, timeFrame, classDistribution: result });
+    res.status(200).json({
+      success: true,
+      scheduleId,
+      timeFrame,
+      classDistribution: result,
+    });
   } catch (error) {
     next(error);
   }
+};
+
+export const getBookings = async (req, res, next) => {
+  const { scheduleId, status } = req.params;
+  const matchStage = { status };
+  if (scheduleId !== "all") {
+    if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
+      return next(new ExpressError("Invalid schedule ID", 400));
+    }
+    matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
+  }
+  const approvedBookings = await Booking.find(matchStage)
+    .populate({
+      path: "scheduleRef",
+      select: "trainRef",
+      populate: {
+        path: "trainRef",
+        select: "name",
+      },
+    })
+    .populate("userRef", "email")
+    .populate("seats", "name")
+    .populate({
+      path: "startHalt",
+      select: "stationRef",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "endHalt",
+      select: "stationRef",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .limit(50)
+    .sort({ date: -1 });
+
+  res.status(200).json({ approvedBookings });
 };
