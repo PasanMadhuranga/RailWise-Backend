@@ -4,7 +4,7 @@ import Booking from "../../models/booking.model.js";
 import User from "../../models/user.model.js";
 import ExpressError from "../../utils/ExpressError.utils.js";
 
-const monthNames = [
+export const monthNames = [
   "Jan",
   "Feb",
   "Mar",
