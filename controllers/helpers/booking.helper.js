@@ -265,7 +265,7 @@ export async function releaseExpiredPendingBookings() {
     pendingTime: { $lt: now },
   });
   for (let booking of bookings) {
-    booking.status = "cancelled";
+    booking.status = "expired";
     await booking.save();
   }
 }

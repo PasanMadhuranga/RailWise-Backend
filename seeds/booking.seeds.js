@@ -51,6 +51,7 @@ const populateBookings = async () => {
         // Get the start and end dates for the schedule
         const startDate = new Date("2023-01-01");
         const endDate = new Date("2024-12-31");
+        const status = ['approved', 'cancelled'];
 
         // Create booking instances
         await Booking.create({
@@ -60,7 +61,7 @@ const populateBookings = async () => {
             startHalt: startHalt._id,
             endHalt: endHalt._id,
             totalFare: Math.abs(startHalt.price - endHalt.price),
-            status: 'approved',
+            status: status[Math.floor(Math.random() * status.length)],
             seats: getRandomSeats(randomWagon),
         });
     }

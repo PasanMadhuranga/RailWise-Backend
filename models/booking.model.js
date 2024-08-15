@@ -32,7 +32,7 @@ const bookingSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ["approved", "cancelled", "pending"],
+    enum: ["approved", "cancelled", "pending", "expired"],
   },
   seats: [
     {
