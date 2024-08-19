@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import ExpressError from "../utils/ExpressError.utils.js";
+import Schedule from "../models/schedule.model.js";
 import {
   generatePeriods,
   performAggregation,
@@ -238,4 +239,12 @@ export const getBookings = async (req, res, next) => {
     .sort({ date: -1 });
 
   res.status(200).json({ approvedBookings });
+};
+
+export const getSchedules = async (req, res, next) => {
+  const schedules = await Schedule.find()
+    .select("name")
+    .sort({ name: 1 });
+
+  res.status(200).json({ schedules });
 };
