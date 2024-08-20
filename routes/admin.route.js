@@ -5,8 +5,9 @@ import {
   getTotalFare,
   getUserRegistrations,
   getBookingClassDistribution,
-  getBookings,
+  getBookingsDetails,
   getSchedules,
+  getSchedulesDetails,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -21,7 +22,8 @@ router.get(
   "/bookingClassDistribution/:scheduleId/:timeFrame",
   catchAsync(getBookingClassDistribution)
 );
-router.get("/bookings/:status/:scheduleId", catchAsync(getBookings));
+router.get("/bookings/:status/:scheduleId", catchAsync(getBookingsDetails));
+router.get("/schedulesDetails", catchAsync(getSchedulesDetails));
 router.get("/schedules", catchAsync(getSchedules));
 
 export default router;
