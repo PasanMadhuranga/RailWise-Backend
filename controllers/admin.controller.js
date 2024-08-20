@@ -42,8 +42,6 @@ export const getBookingsCount = async (req, res, next) => {
     .json({ success: true, scheduleId, timeFrame, bookingsBreakdown: result });
 };
 
-
-
 export const getTotalFare = async (req, res, next) => {
   const { scheduleId, timeFrame } = req.params;
 
@@ -202,13 +200,18 @@ export const getBookingClassDistribution = async (req, res, next) => {
 export const getBookingsDetails = async (req, res, next) => {
   const { scheduleId, status } = req.params;
   const startIndex = parseInt(req.query.startIndex) || 0;
-  const matchStage = { status };
+  const matchStage = {};
   if (scheduleId !== "all") {
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       return next(new ExpressError("Invalid schedule ID", 400));
     }
     matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
   }
+
+  if (status !== "all") {
+    matchStage.status = status;
+  }
+
   const bookingsDetails = await Booking.find(matchStage)
     .populate({
       path: "scheduleRef",
@@ -240,19 +243,16 @@ export const getBookingsDetails = async (req, res, next) => {
     .limit(50)
     .skip(startIndex);
 
-
   res.status(200).json({ bookingsDetails });
 };
 
 export const getSchedulesDetails = async (req, res, next) => {
   const schedulesDetails = await Schedule.find().populate("trainRef", "name");
   res.status(200).json({ schedulesDetails });
-}
+};
 
 export const getSchedules = async (req, res, next) => {
-  const schedules = await Schedule.find()
-    .select("name")
-    .sort({ name: 1 });
+  const schedules = await Schedule.find().select("name").sort({ name: 1 });
 
   res.status(200).json({ schedules });
 };
