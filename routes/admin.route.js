@@ -22,7 +22,7 @@ router.get(
   "/bookingClassDistribution/:scheduleId/:timeFrame",
   catchAsync(getBookingClassDistribution)
 );
-router.get("/bookings/:status/:scheduleId", catchAsync(getBookingsDetails));
+router.get("/bookingsDetails/:status/:scheduleId", catchAsync(getBookingsDetails));
 router.get("/schedulesDetails", catchAsync(getSchedulesDetails));
 router.get("/schedules", catchAsync(getSchedules));
 
