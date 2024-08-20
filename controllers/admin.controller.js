@@ -201,6 +201,8 @@ export const getBookingsDetails = async (req, res, next) => {
   const { scheduleId, status } = req.params;
   const startIndex = parseInt(req.query.startIndex) || 0;
   const matchStage = {};
+  
+  // Validate and set scheduleRef if a specific scheduleId is provided
   if (scheduleId !== "all") {
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       return next(new ExpressError("Invalid schedule ID", 400));
@@ -208,10 +210,15 @@ export const getBookingsDetails = async (req, res, next) => {
     matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
   }
 
+  // Set status if a specific status is provided
   if (status !== "all") {
     matchStage.status = status;
   }
 
+  // Count the total number of bookings matching the criteria
+  const totalBookingsCount = await Booking.countDocuments(matchStage);
+
+  // Retrieve the booking details with pagination
   const bookingsDetails = await Booking.find(matchStage)
     .populate({
       path: "scheduleRef",
@@ -243,8 +250,10 @@ export const getBookingsDetails = async (req, res, next) => {
     .limit(50)
     .skip(startIndex);
 
-  res.status(200).json({ bookingsDetails });
+  // Send the response with both the booking details and total count
+  res.status(200).json({ totalBookingsCount, bookingsDetails });
 };
+
 
 export const getSchedulesDetails = async (req, res, next) => {
   const schedulesDetails = await Schedule.find().populate("trainRef", "name");
