@@ -113,8 +113,12 @@ export const confirmBooking = async (req, res, next) => {
     throw new ExpressError("Booking not found", 404);
   }
 
-  booking.status = "approved";
-  booking.pendingTime = undefined;
+  if (booking.status !== "pending") {
+    throw new ExpressError("Booking is not pending", 400);
+  } else {
+    booking.status = "approved";
+    booking.pendingTime = undefined;
+  }
   await booking.save();
 
   // Generate PDFs for each seat
@@ -142,4 +146,36 @@ export const cancelBooking = async (req, res, next) => {
   booking.pendingTime = undefined;
   await booking.save();
   return res.status(200).json({ message: "Booking cancelled" });
+};
+
+export const getBookingDetails = async (req, res, next) => {
+  const { bookingId } = req.params;
+  const booking = await Booking.findById(bookingId)
+    .populate({
+      path: "startHalt",
+      select: "stationRef platform departureTime",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "endHalt",
+      select: "stationRef arrivalTime platform",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "scheduleRef",
+      select: "trainRef",
+      populate: {
+        path: "trainRef",
+        select: "name",
+      },
+    })
+    .select("-pendingTime -seats")
+
+  res.status(200).json({ booking });
 };

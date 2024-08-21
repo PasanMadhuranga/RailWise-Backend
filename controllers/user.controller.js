@@ -11,6 +11,10 @@ import ExpressError from "../utils/ExpressError.utils.js";
 
 export const register = async (req, res, next) => {
   const { username, email, phone, password } = req.body;
+  // console.log("username", username);
+  // console.log("email", email);
+  // console.log("phone", phone);
+  // console.log("password", password);
   const hashedPassword = await bcryptjs.hash(password, 12);
   try {
     const newUser = new User({
@@ -20,9 +24,7 @@ export const register = async (req, res, next) => {
       password: hashedPassword,
     });
     await newUser.save();
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
 
     const { password: hashed, ...restOfUser } = newUser._doc;
     res

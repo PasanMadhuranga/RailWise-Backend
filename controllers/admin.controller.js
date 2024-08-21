@@ -257,7 +257,23 @@ export const getBookingsDetails = async (req, res, next) => {
 
 export const getSchedulesDetails = async (req, res, next) => {
   const schedulesDetails = await Schedule.find().populate("trainRef", "name");
-  res.status(200).json({ schedulesDetails });
+
+  const transformedDetails = schedulesDetails.map(schedule => ({
+    _id: schedule._id,
+    name: schedule.name,
+    trainRef: schedule.trainRef,
+    monday: schedule.monday ? "✔️" : "❌",
+    tuesday: schedule.tuesday ? "✔️" : "❌",
+    wednesday: schedule.wednesday ? "✔️" : "❌",
+    thursday: schedule.thursday ? "✔️" : "❌",
+    friday: schedule.friday ? "✔️" : "❌",
+    saturday: schedule.saturday ? "✔️" : "❌",
+    sunday: schedule.sunday ? "✔️" : "❌",
+    scheduleType: schedule.scheduleType,
+    __v: schedule.__v,
+  }));
+
+  res.status(200).json({ schedulesDetails: transformedDetails });
 };
 
 export const getSchedules = async (req, res, next) => {
