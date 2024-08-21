@@ -4,6 +4,11 @@ import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import ExpressError from "../utils/ExpressError.utils.js";
 import Schedule from "../models/schedule.model.js";
+import Admin from "../models/admin.model.js";
+
+import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 import {
   generatePeriods,
   performAggregation,
@@ -201,7 +206,7 @@ export const getBookingsDetails = async (req, res, next) => {
   const { scheduleId, status } = req.params;
   const startIndex = parseInt(req.query.startIndex) || 0;
   const matchStage = {};
-  
+
   // Validate and set scheduleRef if a specific scheduleId is provided
   if (scheduleId !== "all") {
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
@@ -254,11 +259,10 @@ export const getBookingsDetails = async (req, res, next) => {
   res.status(200).json({ totalBookingsCount, bookingsDetails });
 };
 
-
 export const getSchedulesDetails = async (req, res, next) => {
   const schedulesDetails = await Schedule.find().populate("trainRef", "name");
 
-  const transformedDetails = schedulesDetails.map(schedule => ({
+  const transformedDetails = schedulesDetails.map((schedule) => ({
     _id: schedule._id,
     name: schedule.name,
     trainRef: schedule.trainRef,
@@ -280,4 +284,27 @@ export const getSchedules = async (req, res, next) => {
   const schedules = await Schedule.find().select("name").sort({ name: 1 });
 
   res.status(200).json({ schedules });
+};
+
+export const login = async (req, res, next) => {
+  const { username, password } = req.body;
+
+  const admin = await Admin.findOne({ username });
+  if (!admin) {
+    return next(new ExpressError("Invalid username or password", 401));
+  }
+
+  const isMatch = await bcryptjs.compare(password, admin.password);
+  if (!isMatch) {
+    return next(new ExpressError("Invalid username or password", 401));
+  }
+
+  const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET);
+
+  const { password: hashed, ...restOfAdmin } = admin._doc;
+
+  res
+    .cookie("access_token", token, { httpOnly: true })
+    .status(200)
+    .json(restOfAdmin);
 };

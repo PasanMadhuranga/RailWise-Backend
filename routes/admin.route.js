@@ -8,10 +8,16 @@ import {
   getBookingsDetails,
   getSchedules,
   getSchedulesDetails,
+  login,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
+
+router.get("/schedules", catchAsync(getSchedules));
+router.post("/login", catchAsync(login));
+
+// Graphs
 router.get(
   "/bookingsCount/:status/:scheduleId/:timeFrame",
   catchAsync(getBookingsCount)
@@ -22,8 +28,10 @@ router.get(
   "/bookingClassDistribution/:scheduleId/:timeFrame",
   catchAsync(getBookingClassDistribution)
 );
+
+// Tables
 router.get("/bookingsDetails/:status/:scheduleId", catchAsync(getBookingsDetails));
 router.get("/schedulesDetails", catchAsync(getSchedulesDetails));
-router.get("/schedules", catchAsync(getSchedules));
+
 
 export default router;

@@ -13,6 +13,7 @@ import populateUttaraHalts from "./halt.Uttara.seeds.js";
 import populateUttaraReturnHalts from "./halt.UttaraReturn.seeds.js";
 import populateUsersAndCardDetails from "./user.seeds.js";
 import populateBookings from "./booking.seeds.js";
+import populateAdmins from "./admin.seeds.js";
 
 // const dbUrl = process.env.DB_URL || "mongodb://localhost:27017/RailWise";
 // const dbUrl = "mongodb://localhost:27017/RailWise";
@@ -45,6 +46,7 @@ const populateDatabase = async () => {
     await populateUttaraReturnHalts();
     await populateUsersAndCardDetails();
     await populateBookings();
+    await populateAdmins();
 
     console.log("----- Database successfully populated -----");
   } catch (error) {
