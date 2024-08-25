@@ -59,7 +59,15 @@ export const generatePeriods = (timeFrame) => {
   return { periods, groupBy };
 };
 
-export const performAggregation = async (Model, matchStage, groupBy, periods, timeFrame, valueField, name) => {
+export const performAggregation = async (
+  Model,
+  matchStage,
+  groupBy,
+  periods,
+  timeFrame,
+  valueField,
+  name
+) => {
   const aggregationResult = await Model.aggregate([
     {
       $match: matchStage,
@@ -93,4 +101,26 @@ export const performAggregation = async (Model, matchStage, groupBy, periods, ti
       [name]: breakdownMap.get(JSON.stringify(period)) || 0,
     };
   });
+};
+
+export const sendRescheduleEmail = async (userEmails, subject, message) => {
+  // Create a transporter
+  let transporter = nodemailer.createTransport({
+    service: "gmail", // or another email service
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.APP_PASSWORD,
+    },
+  });
+
+  // Email content
+  let mailOptions = {
+    from: process.env.EMAIL,
+    to: userEmail,
+    subject,
+    text: message,
+  };
+
+  // Send the email
+  await transporter.sendMail(mailOptions);
 };

@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import ExpressError from "../utils/ExpressError.utils.js";
 import Schedule from "../models/schedule.model.js";
 import Admin from "../models/admin.model.js";
+import Halt from "../models/halt.model.js";
 
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -13,6 +14,7 @@ import {
   generatePeriods,
   performAggregation,
   monthNames,
+  sendRescheduleEmail,
 } from "./helpers/admin.helper.js";
 
 export const getBookingsCount = async (req, res, next) => {
@@ -284,6 +286,53 @@ export const getSchedules = async (req, res, next) => {
   const schedules = await Schedule.find().select("name").sort({ name: 1 });
 
   res.status(200).json({ schedules });
+};
+
+export const notifyReschedules = async (req, res, next) => {
+  const {
+    scheduleId,
+    haltId,
+    date,
+    platformChange,
+    timeDelay,
+    isAffectedAfter,
+  } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
+    return next(new ExpressError("Invalid schedule ID", 400));
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(haltId)) {
+    return next(new ExpressError("Invalid halt ID", 400));
+  }
+
+  const bookings = await Booking.find({
+    scheduleRef: new mongoose.Types.ObjectId(scheduleId),
+    status: "approved",
+    date: new Date(date),
+  })
+    .select("userRef scheduleRef")
+    .populate("userRef", "email")
+    .populate("scheduleRef", "name");
+
+  const halt = await Halt.findById(haltId).populate("stationRef", "name");
+  let message;
+  let subject;
+  if (platformChange) {
+    subject = "Platform Change Notification";
+    message = `The train schedule for ${bookings[0].scheduleRef.name} will arrive at platform ${platformChange} at ${halt.stationRef.name} station on ${date}. However, it has been affected due to unforeseen reasons and will be delayed by ${timeDelay} minutes. We apologize for any inconvenience caused.`;
+  } else if (isAffectedAfter) {
+    subject = "Service Disruption Notification";
+    message = `The train schedule for ${bookings[0].scheduleRef.name} will arrive at ${halt.stationRef.name} station on ${date}. However, it has been affected due to unforeseen reasons and will be delayed by ${timeDelay} minutes. We apologize for any inconvenience caused. The service will be affected after ${isAffectedAfter}.`;
+  }
+
+  bookings.forEach((booking) => {
+    console.log(
+      `Sending email notification to ${booking.userRef.email} for rescheduled booking`
+    );
+  });
+
+  res.status(200).json({ success: true });
 };
 
 export const login = async (req, res, next) => {

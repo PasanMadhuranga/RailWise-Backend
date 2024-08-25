@@ -38,9 +38,7 @@ export const createPendingBooking = async (req, res, next) => {
     fromHalt,
     toHalt
   );
-  console.log("bookedSeats", bookedSeats);
   const bookedSeatStrings = bookedSeats.map((seatId) => seatId.toString());
-  console.log("bookedSeatStrings", bookedSeatStrings);
   const allAvailable = selectedSeatIds.every(
     (seatId) => !bookedSeatStrings.includes(seatId.toString())
   );

@@ -36,8 +36,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your frontend URL
-    credentials: true, // Allow credentials (cookies) to be included in requests
+    origin: ["http://localhost:5173", "http://localhost:5174"],
+    credentials: true,
   })
 );
 app.use("/api/stations", stationRoutes);
