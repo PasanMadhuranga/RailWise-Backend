@@ -15,6 +15,7 @@ import {
   performAggregation,
   monthNames,
   sendRescheduleEmail,
+  sendRescheduleEmailTime,
 } from "./helpers/admin.helper.js";
 
 export const getBookingsCount = async (req, res, next) => {
@@ -356,4 +357,164 @@ export const login = async (req, res, next) => {
     .cookie("access_token", token, { httpOnly: true })
     .status(200)
     .json(restOfAdmin);
+};
+
+export const getHalts = async (req, res, next) => {
+  const { scheduleId } = req.params;
+
+  try {
+    const halts = await Halt.find({ scheduleRef: scheduleId }).populate('stationRef', 'name');
+    res.status(200).json({ halts });
+
+  } catch (error) {
+    console.error('Error fetching halts:', error);
+
+    res.status(500).json({ error: 'An error occurred while fetching halts' });
+  }
+};
+
+export const changePlatform = async (req, res) => {
+  const { haltId,haltName,platform, date} = req.body;
+  
+  try {
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const users = await Booking.find({
+      $and: [
+        {
+          $or: [
+            { startHalt: haltId },
+            { endHalt: haltId }
+          ]
+        },
+        {
+          date: {
+            $gte: startOfDay,
+            $lt: endOfDay
+          }
+        }
+      ]
+    }).populate('userRef', 'email').populate('scheduleRef', 'name');
+
+    const userScheduleData = users.map(booking => ({
+      email: booking.userRef.email,
+      schedule: booking.scheduleRef.name,
+    }));
+    sendRescheduleEmail(userScheduleData,platform,haltName);    
+    res.status(200).json({ message: "Passengers have been notified successfully." });
+  } catch (error) {
+    console.error("Error changing platform:", error);
+    res.status(500).json({ error: "Failed to notify passengers." });
+  }
+};
+
+export const timeChange = async (req, res) => {
+  const { scheduleId, haltOrder, haltId, date, time, notifyAll } = req.body;
+
+  try {
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    let userScheduleData = [];
+
+    const haltOrderNumber = Number(haltOrder);
+
+    if (notifyAll) {
+      // Notify all halts after the specified halt order
+      const affectedHalts = await Halt.find({
+        scheduleRef: scheduleId,
+        haltOrder: { $gte: haltOrderNumber },
+      })
+        .populate('stationRef', 'name')
+        .sort({ haltOrder: 1 });
+
+      const affectedHaltIds = affectedHalts.map((halt) => halt._id.toString());
+      const haltIdToNameMap = affectedHalts.reduce((map, halt) => {
+        map[halt._id] = halt.stationRef.name;
+        return map;
+      }, {});
+
+      // Find users affected by these halts
+      const users = await Booking.find({
+        $and: [
+          {
+            $or: [
+              { startHalt: { $in:Array.from(affectedHaltIds) } },
+              { endHalt: { $in: Array.from(affectedHaltIds) } },
+            ],
+          },
+          {
+            date: {
+              $gte: startOfDay,
+              $lt: endOfDay,
+            },
+          },
+        ],
+      })
+        .populate('userRef', 'email')
+        .populate('scheduleRef', 'name');
+
+      // Prepare user data for email
+      userScheduleData = users.map((booking) => {
+        const userHaltNames = [];
+        if (affectedHaltIds.includes(booking.startHalt.toString())) {
+          userHaltNames.push(haltIdToNameMap[booking.startHalt.toString()]);
+        }
+        if (affectedHaltIds.includes(booking.endHalt.toString())) {
+          userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
+         
+        }
+        console.log(userHaltNames)
+        return {
+          email: booking.userRef.email,
+          schedule: booking.scheduleRef.name,
+          haltNames: userHaltNames,
+        };
+      });
+
+    } else {
+      // Only notify for the specific halt provided in the request
+      const halt = await Halt.findById(haltId).populate('stationRef', 'name');
+
+      const users = await Booking.find({
+        $and: [
+          {
+            $or: [
+              { startHalt: haltId },
+              { endHalt: haltId },
+            ],
+          },
+          {
+            date: {
+              $gte: startOfDay,
+              $lt: endOfDay,
+            },
+          },
+        ],
+      })
+        .populate('userRef', 'email')
+        .populate('scheduleRef', 'name');
+
+      userScheduleData = users.map((booking) => ({
+        email: booking.userRef.email,
+        schedule: booking.scheduleRef.name,
+        haltNames: [halt.stationRef.name],
+      }));
+    }
+
+    // Send reschedule email
+    console.log('User schedule data:', userScheduleData);
+    // await sendRescheduleEmailTime(userScheduleData, time);
+    res.status(200).json({ message: 'Passengers have been notified successfully.' });
+  } catch (error) {
+    console.error('Error changing time:', error);
+    res.status(500).json({ error: 'Failed to notify passengers.' });
+  }
 };

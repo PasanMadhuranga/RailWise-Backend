@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Booking from "../../models/booking.model.js";
 import User from "../../models/user.model.js";
 import ExpressError from "../../utils/ExpressError.utils.js";
+import nodemailer from 'nodemailer';
 
 export const monthNames = [
   "Jan",
@@ -103,24 +104,65 @@ export const performAggregation = async (
   });
 };
 
-export const sendRescheduleEmail = async (userEmails, subject, message) => {
+export const sendRescheduleEmail = async (userScheduleData,platform,haltName) => {
   // Create a transporter
   let transporter = nodemailer.createTransport({
-    service: "gmail", // or another email service
+    service: "gmail", // Specify the email service provider
     auth: {
-      user: process.env.EMAIL,
-      pass: process.env.APP_PASSWORD,
+      user: process.env.EMAIL, // Your email
+      pass: process.env.APP_PASSWORD, // Your app-specific password
     },
   });
 
-  // Email content
-  let mailOptions = {
-    from: process.env.EMAIL,
-    to: userEmail,
-    subject,
-    text: message,
-  };
+  // Loop through each user data and send the notification
+  for (let { email, schedule } of userScheduleData) {
+    // Email content
+    let mailOptions = {
+      from: process.env.EMAIL,
+      to: email, // Send to each user email
+      subject: 'Platform Change Notification',
+      text: `Dear User,\n\nFor schedule "${schedule}", the platform has been changed to ${platform} on ${haltName}.\n\nRegards,\nYour Train Service Team`,
+    };
 
-  // Send the email
-  await transporter.sendMail(mailOptions);
+    try {
+      // Send the email
+      await transporter.sendMail(mailOptions);
+      console.log(`Email sent to: ${email} for schedule: ${schedule}`);
+    } catch (error) {
+      console.error(`Failed to send email to: ${email} for schedule: ${schedule}`, error);
+    }
+  }
+};
+
+export const sendRescheduleEmailTime = async (userScheduleData, time) => {
+  // Create a transporter
+  let transporter = nodemailer.createTransport({
+    service: 'gmail', // Specify the email service provider
+    auth: {
+      user: process.env.EMAIL, // Your email
+      pass: process.env.APP_PASSWORD, // Your app-specific password
+    },
+  });
+
+  // Loop through each user data and send the notification
+  for (let { email, schedule, haltNames } of userScheduleData) {
+    // Construct halt names string
+    const haltNamesText = haltNames.join(' and ');
+
+    // Email content
+    let mailOptions = {
+      from: process.env.EMAIL,
+      to: email, // Send to each user email
+      subject: 'Time Change Notification',
+      text: `Dear User,\n\nFor schedule "${schedule}", the time has been delayed by ${time} minutes at ${haltNamesText}.\n\nRegards,\nYour Train Service Team`,
+    };
+
+    try {
+      // Send the email
+      await transporter.sendMail(mailOptions);
+      console.log(`Email sent to: ${email} for schedule: ${schedule}`);
+    } catch (error) {
+      console.error(`Failed to send email to: ${email} for schedule: ${schedule}`, error);
+    }
+  }
 };
