@@ -31,10 +31,6 @@ export const verifyAdminToken = (req, res, next) => {
 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-
-
-
 // to validate pendingBooking
 export const validatePendingBooking = (req,res,next) => {
   const {error} = pendingSchema.validate(req.body);

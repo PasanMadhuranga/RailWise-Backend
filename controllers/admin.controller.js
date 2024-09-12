@@ -289,53 +289,6 @@ export const getSchedules = async (req, res, next) => {
   res.status(200).json({ schedules });
 };
 
-export const notifyReschedules = async (req, res, next) => {
-  const {
-    scheduleId,
-    haltId,
-    date,
-    platformChange,
-    timeDelay,
-    isAffectedAfter,
-  } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
-    return next(new ExpressError("Invalid schedule ID", 400));
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(haltId)) {
-    return next(new ExpressError("Invalid halt ID", 400));
-  }
-
-  const bookings = await Booking.find({
-    scheduleRef: new mongoose.Types.ObjectId(scheduleId),
-    status: "approved",
-    date: new Date(date),
-  })
-    .select("userRef scheduleRef")
-    .populate("userRef", "email")
-    .populate("scheduleRef", "name");
-
-  const halt = await Halt.findById(haltId).populate("stationRef", "name");
-  let message;
-  let subject;
-  if (platformChange) {
-    subject = "Platform Change Notification";
-    message = `The train schedule for ${bookings[0].scheduleRef.name} will arrive at platform ${platformChange} at ${halt.stationRef.name} station on ${date}. However, it has been affected due to unforeseen reasons and will be delayed by ${timeDelay} minutes. We apologize for any inconvenience caused.`;
-  } else if (isAffectedAfter) {
-    subject = "Service Disruption Notification";
-    message = `The train schedule for ${bookings[0].scheduleRef.name} will arrive at ${halt.stationRef.name} station on ${date}. However, it has been affected due to unforeseen reasons and will be delayed by ${timeDelay} minutes. We apologize for any inconvenience caused. The service will be affected after ${isAffectedAfter}.`;
-  }
-
-  bookings.forEach((booking) => {
-    console.log(
-      `Sending email notification to ${booking.userRef.email} for rescheduled booking`
-    );
-  });
-
-  res.status(200).json({ success: true });
-};
-
 export const login = async (req, res, next) => {
   const { username, password } = req.body;
 
@@ -363,49 +316,64 @@ export const getHalts = async (req, res, next) => {
   const { scheduleId } = req.params;
 
   try {
-    const halts = await Halt.find({ scheduleRef: scheduleId }).populate('stationRef', 'name');
+    const halts = await Halt.find({ scheduleRef: scheduleId }).populate(
+      "stationRef",
+      "name"
+    );
     res.status(200).json({ halts });
-
   } catch (error) {
-    console.error('Error fetching halts:', error);
+    console.error("Error fetching halts:", error);
 
-    res.status(500).json({ error: 'An error occurred while fetching halts' });
+    res.status(500).json({ error: "An error occurred while fetching halts" });
   }
 };
 
 export const changePlatform = async (req, res) => {
-  const { haltId,haltName,platform, date} = req.body;
-  
+  const { haltId, haltName, platform, date } = req.body;
+
   try {
     const startOfDay = new Date(date);
+    startOfDay.setDate(startOfDay.getDate() + 1);
     startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(date);
+    endOfDay.setDate(endOfDay.getDate() + 1);
     endOfDay.setUTCHours(23, 59, 59, 999);
 
-    const users = await Booking.find({
+    const relevantBookings = await Booking.find({
       $and: [
         {
-          $or: [
-            { startHalt: haltId },
-            { endHalt: haltId }
-          ]
+          $or: [{ startHalt: haltId }, { endHalt: haltId }],
         },
         {
           date: {
             $gte: startOfDay,
-            $lt: endOfDay
-          }
-        }
-      ]
-    }).populate('userRef', 'email').populate('scheduleRef', 'name');
+            $lt: endOfDay,
+          },
+        },
+      ],
+    })
+      .populate("userRef", "email")
+      .populate("scheduleRef", "name");
 
-    const userScheduleData = users.map(booking => ({
-      email: booking.userRef.email,
-      schedule: booking.scheduleRef.name,
-    }));
-    sendRescheduleEmail(userScheduleData,platform,haltName);    
-    res.status(200).json({ message: "Passengers have been notified successfully." });
+    console.log("relevantBookings", relevantBookings);
+
+    const userScheduleData = [];
+
+    for (let booking of relevantBookings) {
+      if (booking.userRef) {
+        userScheduleData.push({
+          email: booking.userRef.email,
+          schedule: booking.scheduleRef.name,
+        });
+      }
+    }
+    console.log("User schedule data:", userScheduleData);
+
+    sendRescheduleEmail(userScheduleData, platform, haltName);
+    res
+      .status(200)
+      .json({ message: "Passengers have been notified successfully." });
   } catch (error) {
     console.error("Error changing platform:", error);
     res.status(500).json({ error: "Failed to notify passengers." });
@@ -417,9 +385,11 @@ export const timeChange = async (req, res) => {
 
   try {
     const startOfDay = new Date(date);
+    startOfDay.setDate(startOfDay.getDate() + 1);
     startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(date);
+    endOfDay.setDate(endOfDay.getDate() + 1);
     endOfDay.setUTCHours(23, 59, 59, 999);
 
     let userScheduleData = [];
@@ -432,7 +402,7 @@ export const timeChange = async (req, res) => {
         scheduleRef: scheduleId,
         haltOrder: { $gte: haltOrderNumber },
       })
-        .populate('stationRef', 'name')
+        .populate("stationRef", "name")
         .sort({ haltOrder: 1 });
 
       const affectedHaltIds = affectedHalts.map((halt) => halt._id.toString());
@@ -442,11 +412,11 @@ export const timeChange = async (req, res) => {
       }, {});
 
       // Find users affected by these halts
-      const users = await Booking.find({
+      const relevantBookings = await Booking.find({
         $and: [
           {
             $or: [
-              { startHalt: { $in:Array.from(affectedHaltIds) } },
+              { startHalt: { $in: Array.from(affectedHaltIds) } },
               { endHalt: { $in: Array.from(affectedHaltIds) } },
             ],
           },
@@ -458,38 +428,33 @@ export const timeChange = async (req, res) => {
           },
         ],
       })
-        .populate('userRef', 'email')
-        .populate('scheduleRef', 'name');
+        .populate("userRef", "email")
+        .populate("scheduleRef", "name");
 
-      // Prepare user data for email
-      userScheduleData = users.map((booking) => {
-        const userHaltNames = [];
-        if (affectedHaltIds.includes(booking.startHalt.toString())) {
-          userHaltNames.push(haltIdToNameMap[booking.startHalt.toString()]);
+      for (let booking of relevantBookings) {
+        if (booking.userRef) {
+          const userHaltNames = [];
+          if (affectedHaltIds.includes(booking.startHalt.toString())) {
+            userHaltNames.push(haltIdToNameMap[booking.startHalt.toString()]);
+          }
+          if (affectedHaltIds.includes(booking.endHalt.toString())) {
+            userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
+          }
+          userScheduleData.push({
+            email: booking.userRef.email,
+            schedule: booking.scheduleRef.name,
+            haltNames: userHaltNames,
+          });
         }
-        if (affectedHaltIds.includes(booking.endHalt.toString())) {
-          userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
-         
-        }
-        console.log(userHaltNames)
-        return {
-          email: booking.userRef.email,
-          schedule: booking.scheduleRef.name,
-          haltNames: userHaltNames,
-        };
-      });
-
+      }
     } else {
       // Only notify for the specific halt provided in the request
-      const halt = await Halt.findById(haltId).populate('stationRef', 'name');
+      const halt = await Halt.findById(haltId).populate("stationRef", "name");
 
-      const users = await Booking.find({
+      const relevantBookings = await Booking.find({
         $and: [
           {
-            $or: [
-              { startHalt: haltId },
-              { endHalt: haltId },
-            ],
+            $or: [{ startHalt: haltId }, { endHalt: haltId }],
           },
           {
             date: {
@@ -499,22 +464,27 @@ export const timeChange = async (req, res) => {
           },
         ],
       })
-        .populate('userRef', 'email')
-        .populate('scheduleRef', 'name');
+        .populate("userRef", "email")
+        .populate("scheduleRef", "name");
 
-      userScheduleData = users.map((booking) => ({
-        email: booking.userRef.email,
-        schedule: booking.scheduleRef.name,
-        haltNames: [halt.stationRef.name],
-      }));
+      for (let booking of relevantBookings) {
+        if (booking.userRef) {
+          userScheduleData.push({
+            email: booking.userRef.email,
+            schedule: booking.scheduleRef.name,
+            haltNames: [halt.stationRef.name],
+          });
+        }
+      }
     }
 
     // Send reschedule email
-    console.log('User schedule data:', userScheduleData);
-    // await sendRescheduleEmailTime(userScheduleData, time);
-    res.status(200).json({ message: 'Passengers have been notified successfully.' });
+    await sendRescheduleEmailTime(userScheduleData, time);
+    res
+      .status(200)
+      .json({ message: "Passengers have been notified successfully." });
   } catch (error) {
-    console.error('Error changing time:', error);
-    res.status(500).json({ error: 'Failed to notify passengers.' });
+    console.error("Error changing time:", error);
+    res.status(500).json({ error: "Failed to notify passengers." });
   }
 };
