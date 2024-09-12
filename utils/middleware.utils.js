@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import ExpressError from "./ExpressError.utils.js";
+import { pendingSchema, userRegistrationSchema } from "./validationSchema.utils.js";
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.access_token;

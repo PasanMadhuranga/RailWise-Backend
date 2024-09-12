@@ -1,6 +1,6 @@
 import express from 'express';
 import { catchAsync } from '../utils/catchAsync.utils.js';
-import { verifyToken, validateUserRegistration } from '../utils/middleware.js';
+import { verifyToken, validateUserRegistration } from '../utils/middleware.utils.js';
 import { register, login, logout, getBookingHistory, updateProfile } from "../controllers/user.controller.js";
 
 const router = express.Router();
