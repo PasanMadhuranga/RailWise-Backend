@@ -10,6 +10,9 @@ import adminRoutes from "./routes/admin.route.js";
 
 import { releaseExpiredPendingBookings } from "./controllers/helpers/booking.helper.js";
 
+// // Import middleware functions
+//  import { verifyToken, verifyAdminToken, validatePendingBooking, validateUserRegistration } from "./utils/middleware.js";
+
 import cors from "cors";
 import dotenv from "dotenv";
 

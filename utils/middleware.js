@@ -28,3 +28,27 @@ export const verifyAdminToken = (req, res, next) => {
     next();
   });
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+// to validate pendingBooking
+export const validatePendingBooking = (req,res,next) => {
+  const {error} = pendingSchema.validate(req.body);
+  if(error){
+    throw new ExpressError(error.details[0].message, 400);
+  }
+  next();
+}
+
+// to validate user registration
+export const validateUserRegistration = (req,res,next) => {
+  const {error} = userRegistrationSchema.validate(req.body);
+  if(error){
+    throw new ExpressError(error.details[0].message, 400);
+  }
+  next();
+}
+
