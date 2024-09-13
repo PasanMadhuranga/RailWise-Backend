@@ -83,22 +83,93 @@ export const getTotalFare = async (req, res, next) => {
 
 export const getUserRegistrations = async (req, res, next) => {
   const { timeFrame } = req.params;
-  const { periods, groupBy } = generatePeriods(timeFrame);
+  const currentYear = new Date().getFullYear();
+  let groupBy;
+  let periods = [];
+
+  // Determine the grouping and periods based on the timeFrame
+  switch (timeFrame) {
+    case "yearly":
+      groupBy = { year: { $year: { $toDate: "$_id" } } };
+      for (let year = currentYear - 5; year <= currentYear; year++) {
+        periods.push({ year });
+      }
+      break;
+    case "monthly":
+      groupBy = { year: { $year: { $toDate: "$_id" } }, month: { $month: { $toDate: "$_id" } } };
+      for (let year = currentYear - 1; year <= currentYear; year++) {
+        for (let month = 1; month <= 12; month++) {
+          periods.push({ year, month });
+        }
+      }
+      break;
+    case "weekly":
+      groupBy = { year: { $year: { $toDate: "$_id" } }, week: { $week: { $toDate: "$_id" } } };
+      const firstDate = new Date(2023, 0, 1);
+      const firstWeek = Math.ceil(
+        ((firstDate - new Date(firstDate.getFullYear(), 0, 1)) / 86400000 + firstDate.getDay() + 1) /
+          7
+      );
+      for (let year = currentYear - 1; year <= currentYear; year++) {
+        for (let week = firstWeek; week <= 52; week++) {
+          periods.push({ year, week });
+        }
+      }
+      break;
+    default:
+      return next(new ExpressError("Invalid time frame", 400));
+  }
 
   // Perform aggregation to get the user registration count for each period
-  const result = await performAggregation(
-    User,
-    {},
-    groupBy,
-    periods,
-    timeFrame,
-    { value: { $sum: 1 } },
-    "registrations"
+  const registrationBreakdown = await User.aggregate([
+    {
+      $group: {
+        _id: groupBy,
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { "_id.year": 1, "_id.month": 1, "_id.week": 1 },
+    },
+  ]);
+
+  // Create a map from the aggregated results
+  const breakdownMap = new Map(
+    registrationBreakdown.map((item) => [JSON.stringify(item._id), item.count])
   );
 
-  res
-    .status(200)
-    .json({ success: true, timeFrame, registrationBreakdown: result });
+  // Generate the final result array including periods with zero registrations
+  const result = periods.map((period) => {
+    let periodLabel;
+    if (timeFrame === "yearly") {
+      periodLabel = `${period.year}`;
+    } else if (timeFrame === "monthly") {
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      periodLabel = `${period.year} ${monthNames[period.month - 1]}`;
+    } else if (timeFrame === "weekly") {
+      periodLabel = `${period.year} W${period.week}`;
+    }
+    return {
+      period: periodLabel,
+      registrations: breakdownMap.get(JSON.stringify(period)) || 0,
+    };
+  });
+
+  // Return the result
+  res.status(200).json({ success: true, timeFrame, registrationBreakdown: result });
 };
 
 export const getBookingClassDistribution = async (req, res, next) => {
