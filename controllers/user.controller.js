@@ -88,7 +88,10 @@ export const updateProfile = async (req, res, next) => {
 };
 
 export const getBookingHistory = async (req, res, next) => {
-  const bookings = await Booking.find({ userRef: req.userId })
+  const bookings = await Booking.find({
+    userRef: req.userId,
+    $or: [{ status: "approved" }, { status: "cancelled" }],
+  })
     .populate({
       path: "scheduleRef",
       select: "trainRef",
