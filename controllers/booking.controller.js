@@ -7,6 +7,7 @@ import {
   getBookedSeatsofSchedule,
   generateETickets,
   sendConfirmationEmail,
+  sendCancellationEmail,
 } from "./helpers/booking.helper.js";
 
 // create a pending booking until the user makes the payment
@@ -130,7 +131,45 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
-  const booking = await Booking.findById(bookingId);
+  const booking = await Booking.findById(bookingId)
+  .populate({
+    path:"startHalt",
+    select:"stationRef",
+    populate:{
+      path:"stationRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"endHalt",
+    select:"stationRef",
+    populate:{
+      path:"stationRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"scheduleRef",
+    select:"trainRef",
+    populate:{
+      path:"trainRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"userRef",
+    select:"email username"
+  });
+
+  console.log(booking.startHalt.stationRef.name);
+  console.log(booking.endHalt.stationRef.name);
+  console.log(booking.scheduleRef.trainRef.name);
+  console.log(booking.date);
+  console.log(booking.userRef.email);
+  console.log(booking.userRef.username);
+  // .populate({
+
+  // });
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
   }
@@ -143,6 +182,11 @@ export const cancelBooking = async (req, res, next) => {
   booking.status = "cancelled";
   booking.pendingTime = undefined;
   await booking.save();
+
+
+
+  await sendCancellationEmail(booking.userRef.email,booking.userRef.username, booking.startHalt.stationRef.name, booking.endHalt.stationRef.name, booking.scheduleRef.trainRef.name, booking.date);
+
   return res.status(200).json({ message: "Booking cancelled" });
 };
 
