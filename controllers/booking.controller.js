@@ -131,6 +131,7 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
+  console.log(req.userId);
   const booking = await Booking.findById(bookingId)
   .populate({
     path:"startHalt",
@@ -161,20 +162,8 @@ export const cancelBooking = async (req, res, next) => {
     select:"email username"
   });
 
-  console.log(booking.startHalt.stationRef.name);
-  console.log(booking.endHalt.stationRef.name);
-  console.log(booking.scheduleRef.trainRef.name);
-  console.log(booking.date);
-  console.log(booking.userRef.email);
-  console.log(booking.userRef.username);
-  // .populate({
-
-  // });
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
-  }
-  if (!booking.userRef.equals(req.userId)) {
-    throw new ExpressError("Unauthorized", 401);
   }
   if (booking.date - Date.now() <= 0) {
     throw new ExpressError("Cannot cancel past bookings", 400);
