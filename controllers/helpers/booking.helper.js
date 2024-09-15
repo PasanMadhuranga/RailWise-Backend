@@ -258,6 +258,28 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
   await transporter.sendMail(mailOptions);
 };
 
+export const sendCancellationEmail = async (userEmail, userName, startHalt, endHalt, trainName, date) => {
+  // Create a transporter
+  let transporter = nodemailer.createTransport({
+    service: "gmail", // or another email service
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.APP_PASSWORD,
+    },
+  });
+
+  // Email content
+  let mailOptions = {
+    from: process.env.EMAIL,
+    to: userEmail,
+    subject: "Booking Cancelled",
+    text: `Dear ${userName}, \n Your booking has been cancelled on ${date} from ${startHalt} to ${endHalt} on ${trainName}.`,
+  };
+
+  // Send the email
+  await transporter.sendMail(mailOptions);
+};
+
 export async function releaseExpiredPendingBookings() {
   const now = new Date();
   const bookings = await Booking.find({
