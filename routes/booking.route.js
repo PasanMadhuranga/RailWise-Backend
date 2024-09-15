@@ -3,6 +3,7 @@ import { catchAsync } from "../utils/catchAsync.utils.js";
 import {
   verifyToken,
   validatePendingBooking,
+  verifyToken,
 } from "../utils/middleware.utils.js";
 import {
   createPendingBooking,
