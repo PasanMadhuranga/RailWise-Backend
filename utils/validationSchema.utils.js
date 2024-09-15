@@ -28,7 +28,7 @@ const extension = (joi) => ({
 const Joi = BaseJoi.extend(extension)
 // pendingBooking   schema
 export const pendingSchema = Joi.object({
-    userId: Joi.string().required(),
+    userId: Joi.string().allow(null),  // userId can be a string or null
     scheduleId: Joi.string().required(),
     date: Joi.date().min('now').required(),
     fromHaltId: Joi.string().required(),
