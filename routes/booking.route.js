@@ -2,6 +2,7 @@ import express from "express";
 import { catchAsync } from "../utils/catchAsync.utils.js";
 import {
   validatePendingBooking,
+  verifyToken,
 } from "../utils/middleware.utils.js";
 import {
   createPendingBooking,
@@ -20,7 +21,7 @@ router.post(
 router.post("/confirmBooking", catchAsync(confirmBooking));
 router
   .route("/:bookingId")
-  .get(catchAsync(getBookingDetails))
-  .delete(catchAsync(cancelBooking));
+  .get(verifyToken, catchAsync(getBookingDetails))
+  .delete(verifyToken, catchAsync(cancelBooking));
 
 export default router;
