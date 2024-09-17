@@ -21,7 +21,7 @@ router.post(
 router.post("/confirmBooking", catchAsync(confirmBooking));
 router
   .route("/:bookingId")
-  .get(verifyToken, catchAsync(getBookingDetails))
+  .get(catchAsync(getBookingDetails))
   .delete(verifyToken, catchAsync(cancelBooking));
 
 export default router;
