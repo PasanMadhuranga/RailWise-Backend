@@ -7,6 +7,7 @@ import {
   getBookedSeatsofSchedule,
   generateETickets,
   sendConfirmationEmail,
+  sendCancellationEmail,
 } from "./helpers/booking.helper.js";
 
 // create a pending booking until the user makes the payment
@@ -130,12 +131,39 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
-  const booking = await Booking.findById(bookingId);
+  console.log(req.userId);
+  const booking = await Booking.findById(bookingId)
+  .populate({
+    path:"startHalt",
+    select:"stationRef",
+    populate:{
+      path:"stationRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"endHalt",
+    select:"stationRef",
+    populate:{
+      path:"stationRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"scheduleRef",
+    select:"trainRef",
+    populate:{
+      path:"trainRef",
+      select:"name"
+    }
+  })
+  .populate({
+    path:"userRef",
+    select:"email username"
+  });
+
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
-  }
-  if (!booking.userRef.equals(req.userId)) {
-    throw new ExpressError("Unauthorized", 401);
   }
   if (booking.date - Date.now() <= 0) {
     throw new ExpressError("Cannot cancel past bookings", 400);
@@ -143,6 +171,11 @@ export const cancelBooking = async (req, res, next) => {
   booking.status = "cancelled";
   booking.pendingTime = undefined;
   await booking.save();
+
+
+
+  await sendCancellationEmail(booking.userRef.email,booking.userRef.username, booking.startHalt.stationRef.name, booking.endHalt.stationRef.name, booking.scheduleRef.trainRef.name, booking.date);
+
   return res.status(200).json({ message: "Booking cancelled" });
 };
 

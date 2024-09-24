@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import ExpressError from "./ExpressError.utils.js";
+import { pendingSchema, userRegistrationSchema } from "./validationSchema.utils.js";
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.access_token;
@@ -28,3 +29,23 @@ export const verifyAdminToken = (req, res, next) => {
     next();
   });
 };
+
+
+// to validate pendingBooking
+export const validatePendingBooking = (req,res,next) => {
+  const {error} = pendingSchema.validate(req.body);
+  if(error){
+    throw new ExpressError(error.details[0].message, 400);
+  }
+  next();
+}
+
+// to validate user registration
+export const validateUserRegistration = (req,res,next) => {
+  const {error} = userRegistrationSchema.validate(req.body);
+  if(error){
+    throw new ExpressError(error.details[0].message, 400);
+  }
+  next();
+}
+

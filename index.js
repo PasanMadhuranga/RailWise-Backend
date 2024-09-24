@@ -10,6 +10,9 @@ import adminRoutes from "./routes/admin.route.js";
 
 import { releaseExpiredPendingBookings } from "./controllers/helpers/booking.helper.js";
 
+// // Import middleware functions
+//  import { verifyToken, verifyAdminToken, validatePendingBooking, validateUserRegistration } from "./utils/middleware.js";
+
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -34,12 +37,13 @@ mongoose
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "http://localhost:5174"],
+//     credentials: true,
+//   })
+// );
+app.use(cors());
 app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/bookings", bookingRoutes);
@@ -60,6 +64,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(3000, process.env.HOST, () => {
-  console.log(`Server is running on http://${process.env.HOST}:3000`);
+// Update this part to listen on your private IP
+const PORT = 3000;
+const HOST = process.env.HOST || "localhost";
+
+app.listen(PORT, HOST, () => {
+  console.log(`Server listening on http://${HOST}:${PORT}`);
 });
+
+// app.listen(3000, () => {
+//   console.log(`Server listening on http://localhost:3000`);
+// });

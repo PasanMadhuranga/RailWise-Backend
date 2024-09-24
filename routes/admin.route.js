@@ -9,6 +9,9 @@ import {
   getSchedules,
   getSchedulesDetails,
   login,
+  getHalts,
+  changePlatform,
+  timeChange
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -33,5 +36,9 @@ router.get(
 router.get("/bookingsDetails/:status/:scheduleId", catchAsync(getBookingsDetails));
 router.get("/schedulesDetails", catchAsync(getSchedulesDetails));
 
+// Reschedule
+router.post("/PlatformChange", catchAsync(changePlatform)); 
+router.get("/getHalts/:scheduleId", catchAsync(getHalts));
+router.post("/TimeChange", catchAsync(timeChange));
 
 export default router;
