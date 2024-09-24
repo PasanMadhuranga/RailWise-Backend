@@ -13,13 +13,12 @@ import crypto from "crypto";
 
 export const register = async (req, res, next) => {
   const { username, email, phone, password } = req.body;
-  const hashedPassword = await bcryptjs.hash(password, 12);
   try {
     const newUser = new User({
       username,
       email,
       phone,
-      password: hashedPassword,
+      password
     });
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
@@ -73,8 +72,7 @@ export const updateProfile = async (req, res, next) => {
   }
 
   if (newPassword) {
-    const hashedPassword = await bcryptjs.hash(newPassword, 12);
-    user.password = hashedPassword;
+    user.password = newPassword;
   }
   user.username = username;
   user.email = email;
@@ -115,7 +113,6 @@ export const getBookingHistory = async (req, res, next) => {
   res.status(200).json(bookings);
 };
 
-
 export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -131,4 +128,27 @@ export const forgotPassword = async (req, res, next) => {
   await sendForgotPassEmail(email, resetToken);
 
   res.status(200).json({ message: "Email sent" });
-}
+};
+
+export const resetPassword = async (req, res, next) => {
+  const { resetToken, newPassword } = req.body;
+  console.log("resetToken", resetToken);
+  console.log("newPassword", newPassword);
+  
+  const user = await User.findOne({
+    resetToken,
+    resetTokenExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ExpressError("Invalid or expired token", 400);
+  }
+
+  user.password = newPassword;
+  user.resetToken = undefined;
+  user.resetTokenExpiry = undefined;
+
+  await user.save();
+
+  res.status(200).json({ message: "Password reset" });
+};

@@ -1,7 +1,4 @@
 import Admin from "../models/admin.model.js";
-import bcryptjs from "bcryptjs";
-
-const saltRounds = 12;
 
 const admins = [
   {
@@ -34,8 +31,7 @@ const admins = [
 const populateAdmins = async () => {
   try {
     for (const admin of admins) {
-      const hashedPassword = await bcryptjs.hash(admin.password, saltRounds);
-      const newAdmin = new Admin({ ...admin, password: hashedPassword });
+      const newAdmin = new Admin({ ...admin, password: admin.password });
       await newAdmin.save();
     }
     console.log("Admins successfully populated");

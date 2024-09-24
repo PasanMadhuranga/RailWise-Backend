@@ -1,8 +1,4 @@
-import bcryptjs from "bcryptjs";
 import User from "../models/user.model.js";
-
-const saltRounds = 12;
-
 
 const users = [
     {
@@ -40,8 +36,7 @@ async function populateUsersAndCardDetails() {
     try {
 
         for (const user of users) {
-            const hashedPassword = await bcryptjs.hash(user.password, saltRounds);
-            const newUser = new User({ ...user, password: hashedPassword });
+            const newUser = new User({ ...user, password: user.password });
             await newUser.save();
             // console.log(`User ${user.username} saved successfully.`);
         }
