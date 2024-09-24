@@ -255,7 +255,12 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
   };
 
   // Send the email
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent: " + info.response);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export async function releaseExpiredPendingBookings() {

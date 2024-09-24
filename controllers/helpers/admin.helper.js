@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 import Booking from "../../models/booking.model.js";
 import User from "../../models/user.model.js";
 import ExpressError from "../../utils/ExpressError.utils.js";
@@ -103,7 +101,7 @@ export const performAggregation = async (
   });
 };
 
-export const sendRescheduleEmail = async (userEmails, subject, message) => {
+export const sendRescheduleEmail = async (userEmail, subject, message) => {
   // Create a transporter
   let transporter = nodemailer.createTransport({
     service: "gmail", // or another email service
@@ -122,5 +120,10 @@ export const sendRescheduleEmail = async (userEmails, subject, message) => {
   };
 
   // Send the email
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent" + info.response);
+  } catch (error) {
+    throw new ExpressError("Email could not be sent", 500);
+  }
 };

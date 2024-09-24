@@ -4,17 +4,15 @@ import Train from "../models/train.model.js";
 import Halt from "../models/halt.model.js";
 import Schedule from "../models/schedule.model.js";
 import Station from "../models/station.model.js";
+import ExpressError from "../utils/ExpressError.utils.js";
+import { sendForgotPassEmail } from "./helpers/user.helper.js";
 
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import ExpressError from "../utils/ExpressError.utils.js";
+import crypto from "crypto";
 
 export const register = async (req, res, next) => {
   const { username, email, phone, password } = req.body;
-  // console.log("username", username);
-  // console.log("email", email);
-  // console.log("phone", phone);
-  // console.log("password", password);
   const hashedPassword = await bcryptjs.hash(password, 12);
   try {
     const newUser = new User({
@@ -113,3 +111,21 @@ export const getBookingHistory = async (req, res, next) => {
 
   res.status(200).json(bookings);
 };
+
+
+export const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ExpressError("User not found", 404);
+  }
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  user.resetToken = resetToken;
+  user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+  await user.save();
+
+  // Send email with reset token
+  await sendForgotPassEmail(email, resetToken);
+
+  res.status(200).json({ message: "Email sent" });
+}

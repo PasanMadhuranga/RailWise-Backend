@@ -60,6 +60,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log("Server listening on port 3000");
+app.listen(3000, process.env.HOST, () => {
+  console.log(`Server is running on http://${process.env.HOST}:3000`);
 });

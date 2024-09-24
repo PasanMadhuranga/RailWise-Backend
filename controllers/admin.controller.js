@@ -327,6 +327,7 @@ export const notifyReschedules = async (req, res, next) => {
   }
 
   bookings.forEach((booking) => {
+    sendRescheduleEmail(booking.userRef.email, subject, message);
     console.log(
       `Sending email notification to ${booking.userRef.email} for rescheduled booking`
     );
