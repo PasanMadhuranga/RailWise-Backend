@@ -19,6 +19,7 @@ router.post(
   catchAsync(createPendingBooking)
 ); // apply validatePendingBooking middleware before creating a pending booking
 router.post("/confirmBooking", catchAsync(confirmBooking));
+
 router
   .route("/:bookingId")
   .get(catchAsync(getBookingDetails))

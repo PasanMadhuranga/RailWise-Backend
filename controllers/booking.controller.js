@@ -10,6 +10,8 @@ import {
   sendCancellationEmail,
 } from "./helpers/booking.helper.js";
 
+import Stripe from "stripe";
+
 // create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
   const {
@@ -69,7 +71,10 @@ export const createPendingBooking = async (req, res, next) => {
 };
 
 export const confirmBooking = async (req, res, next) => {
-  const { bookingId, email } = req.body;
+  const { bookingId, email, id } = req.body;
+  console.log("body: ", req.body);
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const booking = await Booking.findById(bookingId)
     .populate({
       path: "startHalt",
@@ -114,10 +119,26 @@ export const confirmBooking = async (req, res, next) => {
 
   if (booking.status !== "pending") {
     throw new ExpressError("Booking is not pending", 400);
-  } else {
-    booking.status = "approved";
-    booking.pendingTime = undefined;
   }
+
+  const payment = await stripe.paymentIntents.create({
+    amount: booking.totalFare * 100, // Amount in the smallest currency unit (e.g., 500 means $5.00)
+    currency: "usd",
+    description: `Train booking payment: ${booking._id}`,
+    payment_method: id,
+    confirm: true,
+    automatic_payment_methods: {
+      enabled: true, // Enable automatic payment methods
+      allow_redirects: "never", // Prevent redirect-based payment methods
+    },
+  });
+
+  if (payment.status !== "succeeded") {
+    throw new ExpressError("Payment failed", 400);
+  }
+
+  booking.status = "approved";
+  booking.pendingTime = undefined;
   await booking.save();
 
   // Generate PDFs for each seat
@@ -131,36 +152,36 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
-  console.log(req.userId);
+  console.log("userId: ", req.userId);
   const booking = await Booking.findById(bookingId)
-  .populate({
-    path:"startHalt",
-    select:"stationRef",
-    populate:{
-      path:"stationRef",
-      select:"name"
-    }
-  })
-  .populate({
-    path:"endHalt",
-    select:"stationRef",
-    populate:{
-      path:"stationRef",
-      select:"name"
-    }
-  })
-  .populate({
-    path:"scheduleRef",
-    select:"trainRef",
-    populate:{
-      path:"trainRef",
-      select:"name"
-    }
-  })
-  .populate({
-    path:"userRef",
-    select:"email username"
-  });
+    .populate({
+      path: "startHalt",
+      select: "stationRef",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "endHalt",
+      select: "stationRef",
+      populate: {
+        path: "stationRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "scheduleRef",
+      select: "trainRef",
+      populate: {
+        path: "trainRef",
+        select: "name",
+      },
+    })
+    .populate({
+      path: "userRef",
+      select: "email username",
+    });
 
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
@@ -172,9 +193,14 @@ export const cancelBooking = async (req, res, next) => {
   booking.pendingTime = undefined;
   await booking.save();
 
-
-
-  await sendCancellationEmail(booking.userRef.email,booking.userRef.username, booking.startHalt.stationRef.name, booking.endHalt.stationRef.name, booking.scheduleRef.trainRef.name, booking.date);
+  await sendCancellationEmail(
+    booking.userRef.email,
+    booking.userRef.username,
+    booking.startHalt.stationRef.name,
+    booking.endHalt.stationRef.name,
+    booking.scheduleRef.trainRef.name,
+    booking.date
+  );
 
   return res.status(200).json({ message: "Booking cancelled" });
 };
@@ -206,7 +232,7 @@ export const getBookingDetails = async (req, res, next) => {
         select: "name",
       },
     })
-    .select("-pendingTime -seats")
+    .select("-pendingTime -seats");
 
   res.status(200).json({ booking });
 };
