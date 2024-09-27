@@ -14,7 +14,7 @@ import {
   generatePeriods,
   performAggregation,
   monthNames,
-  sendRescheduleEmail,
+  sendRescheduleEmailPlatform,
   sendRescheduleEmailTime,
 } from "./helpers/admin.helper.js";
 
@@ -436,12 +436,13 @@ export const changePlatform = async (req, res) => {
         userScheduleData.push({
           email: booking.userRef.email,
           schedule: booking.scheduleRef.name,
+          phone: booking.userRef.phone,
         });
       }
     }
     console.log("User schedule data:", userScheduleData);
 
-    sendRescheduleEmail(userScheduleData, platform, haltName);
+    sendRescheduleEmailPlatform(userScheduleData, platform, haltName);
     res
       .status(200)
       .json({ message: "Passengers have been notified successfully." });
