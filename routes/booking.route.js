@@ -9,6 +9,7 @@ import {
   confirmBooking,
   cancelBooking,
   getBookingDetails,
+  validateETicket,
 } from "../controllers/booking.controller.js";
 
 const router = express.Router();
@@ -24,5 +25,7 @@ router
   .route("/:bookingId")
   .get(catchAsync(getBookingDetails))
   .delete(verifyToken, catchAsync(cancelBooking));
+
+router.get('/validate-ticket/:bookingId/:seatId/:signature', validateETicket);
 
 export default router;

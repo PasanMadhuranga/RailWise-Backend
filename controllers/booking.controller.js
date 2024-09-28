@@ -3,6 +3,7 @@ import ExpressError from "../utils/ExpressError.utils.js";
 import Halt from "../models/halt.model.js";
 import WagonClass from "../models/wagonClass.model.js";
 
+
 import {
   getBookedSeatsofSchedule,
   generateETickets,
@@ -11,6 +12,10 @@ import {
 } from "./helpers/booking.helper.js";
 
 import Stripe from "stripe";
+
+import * as crypto from "crypto"
+
+
 
 // create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
@@ -112,6 +117,7 @@ export const confirmBooking = async (req, res, next) => {
         },
       },
     });
+
 
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
@@ -235,4 +241,95 @@ export const getBookingDetails = async (req, res, next) => {
     .select("-pendingTime -seats");
 
   res.status(200).json({ booking });
+};
+
+export const validateETicket = async (req, res, next) => {
+  const SECRET_KEY = process.env.QR_SECRET_KEY || 'your-secret-key';
+  console.log('SECRET_KEY:', SECRET_KEY);
+  const { bookingId,seatId,signature } = req.params;
+
+  if (!bookingId) {
+    return res.status(400).json({ error: "QR data is required" });
+  }
+
+  try {
+
+    if (!bookingId || !seatId || !signature) {
+      return res.status(400).json({ error: "Invalid QR data format" });
+    }
+
+    const expectedSignature = crypto.createHmac('sha256', SECRET_KEY)
+                                    .update(JSON.stringify({ bookingId, seatId }))
+                                    .digest('hex');
+
+    if (expectedSignature !== signature) {
+      return res.status(400).json({ error: "Invalid or tampered QR code" });
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: "startHalt",
+        select: "stationRef platform departureTime",
+        populate: {
+          path: "stationRef",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "endHalt",
+        select: "stationRef arrivalTime",
+        populate: {
+          path: "stationRef",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "scheduleRef",
+        select: "trainRef",
+        populate: {
+          path: "trainRef",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "seats",
+        select: "name wagonRef",
+        populate: {
+          path: "wagonRef",
+          select: "wagonClassRef wagonNumber",
+          populate: {
+            path: "wagonClassRef",
+            select: "name",
+          },
+        },
+      });
+
+    if (!booking || booking.status !== "approved") {
+      return res.status(400).json({ error: "Invalid or expired ticket" });
+    }
+
+    const seat = booking.seats.find(seat => seat._id.toString() === seatId);
+    if (!seat) {
+      return res.status(400).json({ error: "Seat not found" });
+    }
+
+    return res.status(200).json({
+      bookingId: booking._id,
+      date: booking.date,
+      startHalt: booking.startHalt,
+      endHalt: booking.endHalt,
+      scheduleRef: booking.scheduleRef,
+      seat: {
+        id: seat._id,
+        name: seat.name,
+        wagonNumber: seat.wagonRef.wagonNumber,
+        wagonClass: seat.wagonRef.wagonClassRef.name,
+      },
+      ticketPrice: booking.ticketPrice,
+    });
+
+  } catch (err) {
+    console.error("Error validating e-ticket:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };

@@ -3,6 +3,10 @@ import Halt from "../../models/halt.model.js";
 import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
+import axios from "axios"; 
+
+
 
 export const getBookedSeatsofSchedule = async (
   scheduleId,
@@ -56,7 +60,6 @@ export const generateETickets = async (booking) => {
   const templatePath = "./controllers/helpers/e-ticket-template.pdf";
   const templateBytes = fs.readFileSync(templatePath);
   const pdfBuffers = [];
-  console.log("ticket price", booking.ticketPrice);
 
   for (const seat of booking.seats) {
     const pdfDoc = await PDFDocument.load(templateBytes);
@@ -65,6 +68,34 @@ export const generateETickets = async (booking) => {
     const color = rgb(1, 1, 1);
     const { width, height } = firstPage.getSize();
     const fontSize = 12;
+
+    const payload = {
+      bookingId: booking._id.toString(),
+      seatId: seat._id.toString(),
+    };
+    
+    const SECRET_KEY = process.env.QR_SECRET_KEY || 'your-secret-key';
+    const signature = crypto.createHmac('sha256', SECRET_KEY)
+                            .update(JSON.stringify(payload))
+                            .digest('hex');
+    
+    const qrData = JSON.stringify({ ...payload, signature });
+    console.log('QR Data:', qrData);
+    
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://192.168.237.66:3000/api/bookings/validate-ticket/${encodeURIComponent(payload.bookingId)}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
+    
+    const qrCodeImage = await axios.get(qrUrl, { responseType: 'arraybuffer' }).then(response => response.data);
+    
+    const qrImage = await pdfDoc.embedPng(qrCodeImage);
+    const qrImageDims = qrImage.scale(0.045);
+    
+    firstPage.drawImage(qrImage, {
+      x: 70, 
+      y: height - 30,
+      width: qrImageDims.width,
+      height: qrImageDims.height,
+    });
+
 
     // Adjust the coordinates as per your template layout
     firstPage.drawText(`${booking.date.toISOString().split("T")[0]}`, {
@@ -227,7 +258,6 @@ export const generateETickets = async (booking) => {
   }
 
   console.log("PDFs generated");
-
   return pdfBuffers;
 };
 
@@ -255,12 +285,7 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
   };
 
   // Send the email
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent: " + info.response);
-  } catch (error) {
-    console.log(error);
-  }
+  await transporter.sendMail(mailOptions);
 };
 
 export const sendCancellationEmail = async (userEmail, userName, startHalt, endHalt, trainName, date) => {
