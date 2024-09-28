@@ -134,7 +134,7 @@ export const sendPlatformReschedule = async (
     try {
       // Send the email
       await transporter.sendMail(mailOptions);
-      // await sendRescheduleSMS(phone, message);
+      // await sendRescheduleSMS("94" + phone, message);
       // await sendRescheduleSMS("94768347777", message);
       console.log(`Email and SMS sent to: ${email} for schedule: ${schedule}`);
     } catch (error) {
@@ -173,7 +173,7 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
       // Send the email
       await transporter.sendMail(mailOptions);
       console.log(`Email sent to: ${email} for schedule: ${schedule}`);
-      // await sendRescheduleSMS(phone, message);
+      // await sendRescheduleSMS("94" + phone, message);
       // await sendRescheduleSMS("94768347777", message);
     } catch (error) {
       console.error(
