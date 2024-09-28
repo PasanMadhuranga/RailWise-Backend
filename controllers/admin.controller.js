@@ -96,7 +96,10 @@ export const getUserRegistrations = async (req, res, next) => {
       }
       break;
     case "monthly":
-      groupBy = { year: { $year: { $toDate: "$_id" } }, month: { $month: { $toDate: "$_id" } } };
+      groupBy = {
+        year: { $year: { $toDate: "$_id" } },
+        month: { $month: { $toDate: "$_id" } },
+      };
       for (let year = currentYear - 1; year <= currentYear; year++) {
         for (let month = 1; month <= 12; month++) {
           periods.push({ year, month });
@@ -104,10 +107,15 @@ export const getUserRegistrations = async (req, res, next) => {
       }
       break;
     case "weekly":
-      groupBy = { year: { $year: { $toDate: "$_id" } }, week: { $week: { $toDate: "$_id" } } };
+      groupBy = {
+        year: { $year: { $toDate: "$_id" } },
+        week: { $week: { $toDate: "$_id" } },
+      };
       const firstDate = new Date(2023, 0, 1);
       const firstWeek = Math.ceil(
-        ((firstDate - new Date(firstDate.getFullYear(), 0, 1)) / 86400000 + firstDate.getDay() + 1) /
+        ((firstDate - new Date(firstDate.getFullYear(), 0, 1)) / 86400000 +
+          firstDate.getDay() +
+          1) /
           7
       );
       for (let year = currentYear - 1; year <= currentYear; year++) {
@@ -169,7 +177,9 @@ export const getUserRegistrations = async (req, res, next) => {
   });
 
   // Return the result
-  res.status(200).json({ success: true, timeFrame, registrationBreakdown: result });
+  res
+    .status(200)
+    .json({ success: true, timeFrame, registrationBreakdown: result });
 };
 
 export const getBookingClassDistribution = async (req, res, next) => {
@@ -399,7 +409,7 @@ export const getHalts = async (req, res, next) => {
   }
 };
 
-export const changePlatform = async (req, res) => {
+export const changePlatform = async (req, res, next) => {
   const { haltId, haltName, platform, date } = req.body;
 
   try {
@@ -439,9 +449,8 @@ export const changePlatform = async (req, res) => {
         });
       }
     }
-    console.log("User schedule data:", userScheduleData);
 
-    sendPlatformReschedule(userScheduleData, platform, haltName);
+    await sendPlatformReschedule(userScheduleData, platform, haltName);
     res
       .status(200)
       .json({ message: "Passengers have been notified successfully." });
@@ -451,7 +460,7 @@ export const changePlatform = async (req, res) => {
   }
 };
 
-export const timeChange = async (req, res) => {
+export const timeChange = async (req, res, next) => {
   const { scheduleId, haltOrder, haltId, date, time, notifyAll } = req.body;
 
   try {
@@ -501,7 +510,7 @@ export const timeChange = async (req, res) => {
       })
         .populate("userRef", "email phone username")
         .populate("scheduleRef", "name");
-      
+
       console.log("Relevant bookings:", relevantBookings[0].userRef);
 
       for (let booking of relevantBookings) {
