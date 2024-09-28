@@ -14,8 +14,8 @@ import {
   generatePeriods,
   performAggregation,
   monthNames,
-  sendRescheduleEmailPlatform,
-  sendRescheduleEmailTime,
+  sendPlatformReschedule,
+  sendTimeReschedule,
 } from "./helpers/admin.helper.js";
 
 export const getBookingsCount = async (req, res, next) => {
@@ -424,16 +424,15 @@ export const changePlatform = async (req, res) => {
         },
       ],
     })
-      .populate("userRef", "email")
+      .populate("userRef", "email phone username")
       .populate("scheduleRef", "name");
-
-    console.log("relevantBookings", relevantBookings);
 
     const userScheduleData = [];
 
     for (let booking of relevantBookings) {
       if (booking.userRef) {
         userScheduleData.push({
+          username: booking.userRef.username,
           email: booking.userRef.email,
           schedule: booking.scheduleRef.name,
           phone: booking.userRef.phone,
@@ -442,7 +441,7 @@ export const changePlatform = async (req, res) => {
     }
     console.log("User schedule data:", userScheduleData);
 
-    sendRescheduleEmailPlatform(userScheduleData, platform, haltName);
+    sendPlatformReschedule(userScheduleData, platform, haltName);
     res
       .status(200)
       .json({ message: "Passengers have been notified successfully." });
@@ -500,8 +499,10 @@ export const timeChange = async (req, res) => {
           },
         ],
       })
-        .populate("userRef", "email")
+        .populate("userRef", "email phone username")
         .populate("scheduleRef", "name");
+      
+      console.log("Relevant bookings:", relevantBookings[0].userRef);
 
       for (let booking of relevantBookings) {
         if (booking.userRef) {
@@ -513,9 +514,11 @@ export const timeChange = async (req, res) => {
             userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
           }
           userScheduleData.push({
+            username: booking.userRef.username,
             email: booking.userRef.email,
             schedule: booking.scheduleRef.name,
             haltNames: userHaltNames,
+            phone: booking.userRef.phone,
           });
         }
       }
@@ -536,12 +539,13 @@ export const timeChange = async (req, res) => {
           },
         ],
       })
-        .populate("userRef", "email")
+        .populate("userRef", "email phone username")
         .populate("scheduleRef", "name");
 
       for (let booking of relevantBookings) {
         if (booking.userRef) {
           userScheduleData.push({
+            username: booking.userRef.username,
             email: booking.userRef.email,
             schedule: booking.scheduleRef.name,
             haltNames: [halt.stationRef.name],
@@ -551,7 +555,7 @@ export const timeChange = async (req, res) => {
     }
 
     // Send reschedule email
-    await sendRescheduleEmailTime(userScheduleData, time);
+    await sendTimeReschedule(userScheduleData, time);
     res
       .status(200)
       .json({ message: "Passengers have been notified successfully." });
