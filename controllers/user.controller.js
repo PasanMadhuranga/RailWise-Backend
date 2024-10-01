@@ -132,9 +132,7 @@ export const forgotPassword = async (req, res, next) => {
 
 export const resetPassword = async (req, res, next) => {
   const { resetToken, newPassword } = req.body;
-  console.log("resetToken", resetToken);
-  console.log("newPassword", newPassword);
-  
+
   const user = await User.findOne({
     resetToken,
     resetTokenExpiry: { $gt: Date.now() },

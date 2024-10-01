@@ -143,6 +143,7 @@ export const confirmBooking = async (req, res, next) => {
     throw new ExpressError("Payment failed", 400);
   }
 
+  booking.paymentId = payment.id;
   booking.status = "approved";
   booking.pendingTime = undefined;
   await booking.save();
@@ -195,6 +196,17 @@ export const cancelBooking = async (req, res, next) => {
   if (booking.date - Date.now() <= 0) {
     throw new ExpressError("Cannot cancel past bookings", 400);
   }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const refund = await stripe.refunds.create({
+    payment_intent: booking.paymentId,
+    amount: Math.round(booking.totalFare * 0.8 * 100), // refund 80% of the total fare
+  });
+
+  if (refund.status !== "succeeded") {
+    throw new ExpressError("Refund failed", 400);
+  }
+
   booking.status = "cancelled";
   booking.pendingTime = undefined;
   await booking.save();
@@ -245,7 +257,6 @@ export const getBookingDetails = async (req, res, next) => {
 
 export const validateETicket = async (req, res, next) => {
   const SECRET_KEY = process.env.QR_SECRET_KEY || 'your-secret-key';
-  console.log('SECRET_KEY:', SECRET_KEY);
   const { bookingId,seatId,signature } = req.params;
 
   if (!bookingId) {

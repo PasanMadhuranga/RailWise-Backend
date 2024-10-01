@@ -40,6 +40,7 @@ const bookingSchema = new mongoose.Schema({
       ref: "Seat",
     },
   ],
+  paymentId: String,
   pendingTime: {
     type: Date,
   },
