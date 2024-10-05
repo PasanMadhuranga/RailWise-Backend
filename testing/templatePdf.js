@@ -1,5 +1,6 @@
 import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs";
+import axios from "axios";
 
 const generateETickets = async (booking) => {
   const templatePath = "./Ticket_template.pdf";
@@ -25,13 +26,6 @@ const generateETickets = async (booking) => {
       color,
     });
 
-    firstPage.drawText(`${booking.date.split("T")[0]}`, {
-      x: 394,
-      y: 27,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${booking.from.name}`, {
       x: 70,
       y: 62,
@@ -39,25 +33,12 @@ const generateETickets = async (booking) => {
       color,
     });
 
-    firstPage.drawText(`${booking.from.name}`, {
-        x: 394,
-        y: 65,
-        size: fontSize - 3,
-        color,
-      });
-
     firstPage.drawText(`${booking.train}`, {
         x: 70,
         y: 98,
         size: fontSize,
         color,
       });
-    firstPage.drawText(`${booking.train}`, {
-      x: 394,
-      y: 101,
-      size: fontSize - 3,
-      color,
-    });
 
     firstPage.drawText(`${booking._id}`, {
         x: 68,
@@ -65,35 +46,18 @@ const generateETickets = async (booking) => {
         size: fontSize,
         color,
       });
-    firstPage.drawText(`${booking._id}`, {
-      x: 393,
-      y: 138,
-      size: fontSize - 3,
-      color,
-    });
+
     firstPage.drawText(`${booking.from.departureTime}`, {
       x: 182,
       y: 25,
       size: fontSize,
       color,
     });
-    firstPage.drawText(`${booking.from.departureTime}`, {
-      x: 469,
-      y: 27,
-      size: fontSize - 3,
-      color,
-    });
+
     firstPage.drawText(`${booking.from.platformNumber}`, {
       x: 184,
       y: 98,
       size: fontSize,
-      color,
-    });
-
-    firstPage.drawText(`${booking.from.platformNumber}`, {
-      x: 467,
-      y: 101,
-      size: fontSize-3,
       color,
     });
 
@@ -111,13 +75,6 @@ const generateETickets = async (booking) => {
       color,
     }); 
 
-    firstPage.drawText(`${booking.to.arrivalTime}`, {
-      x: 546,
-      y: 27,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${booking.to.name}`, {
       x: 261,
       y: 62,
@@ -125,38 +82,17 @@ const generateETickets = async (booking) => {
       color,
     }); 
 
-    firstPage.drawText(`${booking.to.name}`, {
-      x: 514,
-      y: 65,
-      size: fontSize - 3,
-      color,
-    }); 
-
     firstPage.drawText(`${seat.wagonNumber}`, {
       x: 261,
       y: 98,
       size: fontSize,
       color,
     });
-
-    firstPage.drawText(`${seat.wagonNumber}`, {
-      x: 521,
-      y: 100,
-      size: fontSize - 3,
-      color,
-    });
-
     
     firstPage.drawText(`${seat.name}`, {
       x: 340,
       y: 98,
       size: fontSize,
-      color,
-    });
-    firstPage.drawText(`${seat.name}`, {
-      x: 570,
-      y: 100,
-      size: fontSize - 3,
       color,
     });
 
@@ -167,28 +103,19 @@ const generateETickets = async (booking) => {
       color,
     });
 
-    firstPage.drawText(`${seat.amount}`+' LKR', {
-      x: 525,
-      y: 138,
-      size: fontSize - 3,
-      color,
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${process.env.HOST}:3000/api/bookings/validateTicket/djsrf3rd2q3d2qe/12d3qdd3qdq/1212s12qdqd`;
+    
+    const qrCodeImage = await axios.get(qrUrl, { responseType: 'arraybuffer' }).then(response => response.data);
+    
+    const qrImage = await pdfDoc.embedPng(qrCodeImage);
+    const qrImageDims = qrImage.scale(0.175);
+    
+    firstPage.drawImage(qrImage, {
+      x: 461, 
+      y: 30,
+      width: qrImageDims.width,
+      height: qrImageDims.height,
     });
-
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
     const pdfBytes = await pdfDoc.save();
     pdfBuffers.push(pdfBytes);

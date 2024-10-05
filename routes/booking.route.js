@@ -26,6 +26,6 @@ router
   .get(catchAsync(getBookingDetails))
   .delete(verifyToken, catchAsync(cancelBooking));
 
-router.get('/validate-ticket/:bookingId/:seatId/:signature', validateETicket);
+router.get('/validateTicket/:bookingId/:seatId/:signature', validateETicket);
 
 export default router;
