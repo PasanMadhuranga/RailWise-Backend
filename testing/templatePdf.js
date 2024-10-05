@@ -48,56 +48,56 @@ const generateETickets = async (booking) => {
       });
 
     firstPage.drawText(`${booking.from.departureTime}`, {
-      x: 182,
+      x: 215,
       y: 25,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.from.platformNumber}`, {
-      x: 184,
+      x: 285,
       y: 98,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.class}`, {
-      x: 233,
-      y: 138,
+      x: 215,
+      y: 98,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.to.arrivalTime}`, {
-      x: 261,
+      x: 330,
       y: 24,
       size: fontSize,
       color,
     }); 
 
     firstPage.drawText(`${booking.to.name}`, {
-      x: 261,
+      x: 281,
       y: 62,
       size: fontSize,
       color,
     }); 
 
     firstPage.drawText(`${seat.wagonNumber}`, {
-      x: 261,
+      x: 350,
       y: 98,
       size: fontSize,
       color,
     });
     
     firstPage.drawText(`${seat.name}`, {
-      x: 340,
+      x: 410,
       y: 98,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${seat.amount}` + 'LKR', {
-      x: 295,
+      x: 350,
       y: 137,
       size: fontSize,
       color,
@@ -128,15 +128,15 @@ const generateETickets = async (booking) => {
 
 // Dummy data for testing
 const dummyBooking = {
-  _id: "1234567890",
+  _id: "66fbcf5224",
   train: "Galu Kumari",
-  from: { name: "Station A", platformNumber: 4, departureTime: "10:00 AM" },
+  from: { name: "Colombo Fort", platformNumber: 4, departureTime: "05.05 AM" },
   class: "first",
-  to: { name: "Station B", arrivalTime: "12:00 PM" },
+  to: { name: "Galle", arrivalTime: "07:34 PM" },
   date: new Date().toISOString(),
   seats: [
-    { _id: "seat1", name: "1A", amount: 50, wagonNumber: 1 },
-    { _id: "seat2", name: "2A", amount: 50, wagonNumber: 2 },
+    { _id: "seat1", name: "7D", amount: 670, wagonNumber: 1 },
+    { _id: "seat2", name: "7D", amount: 670, wagonNumber: 2 },
   ],
 };
 
