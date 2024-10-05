@@ -303,7 +303,7 @@ export const sendCancellationEmail = async (userEmail, userName, startHalt, endH
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Booking Cancelled",
-    text: `Dear ${userName}, \n Your booking has been cancelled on ${date} from ${startHalt} to ${endHalt} on ${trainName}.`,
+    text: `Dear ${userName}, \n Your booking has been cancelled on ${date} from ${startHalt} to ${endHalt} on ${trainName}. You will be refunded 80% of the booking amount. \n\n Regards, \n RailWise Team`,
   };
 
   // Send the email
