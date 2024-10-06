@@ -82,33 +82,25 @@ export const generateETickets = async (booking) => {
     const qrData = JSON.stringify({ ...payload, signature });
     console.log('QR Data:', qrData);
     
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://192.168.237.66:3000/api/bookings/validate-ticket/${encodeURIComponent(payload.bookingId)}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${process.env.HOST}:3000/api/bookings/validate-ticket/${encodeURIComponent(payload.bookingId)}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
     
     const qrCodeImage = await axios.get(qrUrl, { responseType: 'arraybuffer' }).then(response => response.data);
     
     const qrImage = await pdfDoc.embedPng(qrCodeImage);
-    const qrImageDims = qrImage.scale(0.045);
+    const qrImageDims = qrImage.scale(0.175);
     
     firstPage.drawImage(qrImage, {
-      x: 70, 
-      y: height - 30,
+      x: 461, 
+      y: 30,
       width: qrImageDims.width,
       height: qrImageDims.height,
     });
 
 
-    // Adjust the coordinates as per your template layout
     firstPage.drawText(`${booking.date.toISOString().split("T")[0]}`, {
       x: 70,
       y: 25,
       size: fontSize,
-      color,
-    });
-
-    firstPage.drawText(`${booking.date.toISOString().split("T")[0]}`, {
-      x: 394,
-      y: 27,
-      size: fontSize - 3,
       color,
     });
 
@@ -119,23 +111,10 @@ export const generateETickets = async (booking) => {
       color,
     });
 
-    firstPage.drawText(`${booking.startHalt.stationRef.name}`, {
-      x: 394,
-      y: 65,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${booking.scheduleRef.trainRef.name}`, {
       x: 70,
       y: 98,
       size: fontSize,
-      color,
-    });
-    firstPage.drawText(`${booking.scheduleRef.trainRef.name}`, {
-      x: 394,
-      y: 101,
-      size: fontSize - 3,
       color,
     });
 
@@ -145,111 +124,60 @@ export const generateETickets = async (booking) => {
       size: fontSize,
       color,
     });
-    firstPage.drawText(`${booking._id + seat.wagonRef.wagonNumber + seat.name}`, {
-      x: 393,
-      y: 138,
-      size: fontSize - 3,
-      color,
-    });
+
     firstPage.drawText(`${booking.startHalt.departureTime}`, {
-      x: 182,
+      x: 215,
       y: 25,
       size: fontSize,
       color,
     });
-    firstPage.drawText(`${booking.startHalt.departureTime}`, {
-      x: 469,
-      y: 27,
-      size: fontSize - 3,
-      color,
-    });
+
     firstPage.drawText(`${booking.startHalt.platform}`, {
-      x: 184,
+      x: 285,
       y: 98,
       size: fontSize,
       color,
     });
 
-    firstPage.drawText(`${booking.startHalt.platform}`, {
-      x: 467,
-      y: 101,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${seat.wagonRef.wagonClassRef.name}`, {
-      x: 233,
-      y: 138,
+      x: 215,
+      y: 98,
       size: fontSize,
       color,
     });
 
     firstPage.drawText(`${booking.endHalt.arrivalTime}`, {
-      x: 261,
+      x: 330,
       y: 24,
       size: fontSize,
       color,
     });
 
-    firstPage.drawText(`${booking.endHalt.arrivalTime}`, {
-      x: 546,
-      y: 27,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${booking.endHalt.stationRef.name}`, {
-      x: 261,
+      x: 281,
       y: 62,
       size: fontSize,
       color,
     });
 
-    firstPage.drawText(`${booking.endHalt.stationRef.name}`, {
-      x: 514,
-      y: 65,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${seat.wagonRef.wagonNumber}`, {
-      x: 261,
+      x: 350,
       y: 98,
       size: fontSize,
       color,
     });
 
-    firstPage.drawText(`${seat.wagonRef.wagonNumber}`, {
-      x: 521,
-      y: 100,
-      size: fontSize - 3,
-      color,
-    });
-
     firstPage.drawText(`${seat.name}`, {
-      x: 340,
+      x: 410,
       y: 98,
       size: fontSize,
-      color,
-    });
-    firstPage.drawText(`${seat.name}`, {
-      x: 570,
-      y: 100,
-      size: fontSize - 3,
       color,
     });
 
     firstPage.drawText(`${booking.ticketPrice} LKR`, {
-      x: 295,
+      x: 350,
       y: 137,
       size: fontSize,
-      color,
-    });
-
-    firstPage.drawText(`${booking.ticketPrice}` + " LKR", {
-      x: 525,
-      y: 138,
-      size: fontSize - 3,
       color,
     });
 
