@@ -3,7 +3,6 @@ import ExpressError from "../utils/ExpressError.utils.js";
 import Halt from "../models/halt.model.js";
 import WagonClass from "../models/wagonClass.model.js";
 
-
 import {
   getBookedSeatsofSchedule,
   generateETickets,
@@ -13,14 +12,12 @@ import {
 
 import Stripe from "stripe";
 
-import * as crypto from "crypto"
-
-
+import * as crypto from "crypto";
 
 // create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
   const {
-    userId = undefined,
+    userId,
     scheduleId,
     date,
     fromHaltId,
@@ -28,6 +25,8 @@ export const createPendingBooking = async (req, res, next) => {
     selectedSeatIds,
     selectedClassId,
   } = req.body;
+
+  console.log("Pending booking request: ", req.body);
 
   // get fromHalt and toHalt
   const fromHalt = await Halt.findById(fromHaltId).select("price");
@@ -67,7 +66,7 @@ export const createPendingBooking = async (req, res, next) => {
     totalFare,
     status: "pending",
     seats: selectedSeatIds,
-    pendingTime, // store the expiry time of the hold
+    pendingTime,
   });
   await booking.save();
   return res
@@ -118,7 +117,6 @@ export const confirmBooking = async (req, res, next) => {
       },
     });
 
-
   if (!booking) {
     throw new ExpressError("Booking not found", 404);
   }
@@ -146,6 +144,7 @@ export const confirmBooking = async (req, res, next) => {
   booking.paymentId = payment.id;
   booking.status = "approved";
   booking.pendingTime = undefined;
+  console.log("Booking approved", booking);
   await booking.save();
 
   // Generate PDFs for each seat
@@ -256,22 +255,22 @@ export const getBookingDetails = async (req, res, next) => {
 };
 
 export const validateETicket = async (req, res, next) => {
-  const SECRET_KEY = process.env.QR_SECRET_KEY || 'your-secret-key';
-  const { bookingId,seatId,signature } = req.params;
+  const SECRET_KEY = process.env.QR_SECRET_KEY || "your-secret-key";
+  const { bookingId, seatId, signature } = req.params;
 
   if (!bookingId) {
     return res.status(400).json({ error: "QR data is required" });
   }
 
   try {
-
     if (!bookingId || !seatId || !signature) {
       return res.status(400).json({ error: "Invalid QR data format" });
     }
 
-    const expectedSignature = crypto.createHmac('sha256', SECRET_KEY)
-                                    .update(JSON.stringify({ bookingId, seatId }))
-                                    .digest('hex');
+    const expectedSignature = crypto
+      .createHmac("sha256", SECRET_KEY)
+      .update(JSON.stringify({ bookingId, seatId }))
+      .digest("hex");
 
     if (expectedSignature !== signature) {
       return res.status(400).json({ error: "Invalid or tampered QR code" });
@@ -319,7 +318,7 @@ export const validateETicket = async (req, res, next) => {
       return res.status(400).json({ error: "Invalid or expired ticket" });
     }
 
-    const seat = booking.seats.find(seat => seat._id.toString() === seatId);
+    const seat = booking.seats.find((seat) => seat._id.toString() === seatId);
     if (!seat) {
       return res.status(400).json({ error: "Seat not found" });
     }
@@ -338,7 +337,6 @@ export const validateETicket = async (req, res, next) => {
       },
       ticketPrice: booking.ticketPrice,
     });
-
   } catch (err) {
     console.error("Error validating e-ticket:", err);
     return res.status(500).json({ error: "Internal server error" });
