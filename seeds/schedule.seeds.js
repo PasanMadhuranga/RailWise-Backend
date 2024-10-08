@@ -6,12 +6,14 @@ const names = [
   "Beliatta - Maradana",
   "Beliatta - Anuradhapura",
   "Colombo Fort - Kankesanthurai",
+  "Matara - Maradana",
 ]
 
 const returnNmaes = [
   "Maradana - Beliatta",
   "Anuradhapura - Beliatta",
   "Kankesanthurai - Colombo Fort",
+  "Maradana - Matara",
 ]
 
 // Function to create schedule data
