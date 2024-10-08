@@ -11,6 +11,8 @@ import populateRajaRataHalts from "./halt.RajaRata.seeds.js";
 import populateRajaRataReturnHalts from "./halt.RajaRataReturn.seeds.js";
 import populateUttaraHalts from "./halt.Uttara.seeds.js";
 import populateUttaraReturnHalts from "./halt.UttaraReturn.seeds.js";
+import populateRuhunuHalts from "./halt.Ruhunu.seeds.js";
+import populateRuhunuReturnHalts from "./halt.RuhunuReturn.seeds.js";
 import populateUsersAndCardDetails from "./user.seeds.js";
 import populateBookings from "./booking.seeds.js";
 import populateAdmins from "./admin.seeds.js";
@@ -44,6 +46,8 @@ const populateDatabase = async () => {
     await populateRajaRataReturnHalts();
     await populateUttaraHalts();
     await populateUttaraReturnHalts();
+    await populateRuhunuHalts();
+    await populateRuhunuReturnHalts();
     await populateUsersAndCardDetails();
     await populateBookings();
     await populateAdmins();

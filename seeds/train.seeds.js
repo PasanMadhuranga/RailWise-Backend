@@ -16,6 +16,7 @@ const populateTrains = async () => {
       { name: 'Galu Kumari', wagons: wagons.slice(0, 5).map(wagon => wagon._id) }, 
       { name: 'Rajarata Rajina', wagons: wagons.slice(5, 8).map(wagon => wagon._id) },
       { name: 'Uttara Devi', wagons: wagons.slice(8, 10).map(wagon => wagon._id) },
+      { name: 'Ruhunu Kumari', wagons: wagons.slice(10, 17).map(wagon => wagon._id) },
     ]);
 
     console.log('Trains successfully populated');

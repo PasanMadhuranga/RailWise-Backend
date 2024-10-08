@@ -209,6 +209,35 @@ const populateSeats = async () => {
         name: seat.id,
         position: [seat.x, seat.y],
       })), // third class of Uttara Devi
+
+      ...firstSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // first class of Ruhunu Kumari
+      ...firstSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // first class of Ruhunu Kumari
+      ...secondSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // second class of Ruhunu Kumari
+      ...secondSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // second class of Ruhunu Kumari
+      ...thirdSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // third class of Ruhunu Kumari
+      ...thirdSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // third class of Ruhunu Kumari
+      ...thirdSeats.map((seat) => ({
+        name: seat.id,
+        position: [seat.x, seat.y],
+      })), // third class of Ruhunu Kumari
     ]);
 
     console.log("Seats successfully populated");
