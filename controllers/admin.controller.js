@@ -16,6 +16,10 @@ import {
   monthNames,
   sendPlatformReschedule,
   sendTimeReschedule,
+  getDayRange,
+  buildUserScheduleData,
+  getRelevantBookings,
+  getAffectedHalts,
 } from "./helpers/admin.helper.js";
 
 export const getBookingsCount = async (req, res, next) => {
@@ -413,44 +417,10 @@ export const changePlatform = async (req, res, next) => {
   const { haltId, haltName, platform, date } = req.body;
 
   try {
-    const startOfDay = new Date(date);
-    startOfDay.setDate(startOfDay.getDate() + 1);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setDate(endOfDay.getDate() + 1);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const relevantBookings = await Booking.find({
-      $and: [
-        {
-          $or: [{ startHalt: haltId }, { endHalt: haltId }],
-        },
-        {
-          date: {
-            $gte: startOfDay,
-            $lt: endOfDay,
-          },
-        },
-      ],
-    })
-      .populate("userRef", "email phone username")
-      .populate("scheduleRef", "name");
-
-    const userScheduleData = [];
-
-    for (let booking of relevantBookings) {
-      if (booking.userRef) {
-        userScheduleData.push({
-          username: booking.userRef.username,
-          email: booking.userRef.email,
-          schedule: booking.scheduleRef.name,
-          phone: booking.userRef.phone,
-        });
-      }
-    }
-
-    await sendPlatformReschedule(userScheduleData, platform, haltName);
+    const { startOfDay, endOfDay } = getDayRange(date);
+    const relevantBookings = await getRelevantBookings([haltId], startOfDay, endOfDay);
+    const userScheduleData = buildUserScheduleData(relevantBookings, {[haltId]:haltName}, [haltId]);
+    await sendPlatformReschedule(userScheduleData, platform);
     res
       .status(200)
       .json({ message: "Passengers have been notified successfully." });
@@ -460,114 +430,21 @@ export const changePlatform = async (req, res, next) => {
   }
 };
 
+
 export const timeChange = async (req, res, next) => {
   const { scheduleId, haltOrder, haltId, date, time, notifyAll } = req.body;
 
   try {
-    const startOfDay = new Date(date);
-    startOfDay.setDate(startOfDay.getDate() + 1);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setDate(endOfDay.getDate() + 1);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    let userScheduleData = [];
-
+    const { startOfDay, endOfDay } = getDayRange(date);
     const haltOrderNumber = Number(haltOrder);
 
-    if (notifyAll) {
-      // Notify all halts after the specified halt order
-      const affectedHalts = await Halt.find({
-        scheduleRef: scheduleId,
-        haltOrder: { $gte: haltOrderNumber },
-      })
-        .populate("stationRef", "name")
-        .sort({ haltOrder: 1 });
-
-      const affectedHaltIds = affectedHalts.map((halt) => halt._id.toString());
-      const haltIdToNameMap = affectedHalts.reduce((map, halt) => {
-        map[halt._id] = halt.stationRef.name;
-        return map;
-      }, {});
-
-      // Find users affected by these halts
-      const relevantBookings = await Booking.find({
-        $and: [
-          {
-            $or: [
-              { startHalt: { $in: Array.from(affectedHaltIds) } },
-              { endHalt: { $in: Array.from(affectedHaltIds) } },
-            ],
-          },
-          {
-            date: {
-              $gte: startOfDay,
-              $lt: endOfDay,
-            },
-          },
-        ],
-      })
-        .populate("userRef", "email phone username")
-        .populate("scheduleRef", "name");
-
-      console.log("Relevant bookings:", relevantBookings[0].userRef);
-
-      for (let booking of relevantBookings) {
-        if (booking.userRef) {
-          const userHaltNames = [];
-          if (affectedHaltIds.includes(booking.startHalt.toString())) {
-            userHaltNames.push(haltIdToNameMap[booking.startHalt.toString()]);
-          }
-          if (affectedHaltIds.includes(booking.endHalt.toString())) {
-            userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
-          }
-          userScheduleData.push({
-            username: booking.userRef.username,
-            email: booking.userRef.email,
-            schedule: booking.scheduleRef.name,
-            haltNames: userHaltNames,
-            phone: booking.userRef.phone,
-          });
-        }
-      }
-    } else {
-      // Only notify for the specific halt provided in the request
-      const halt = await Halt.findById(haltId).populate("stationRef", "name");
-
-      const relevantBookings = await Booking.find({
-        $and: [
-          {
-            $or: [{ startHalt: haltId }, { endHalt: haltId }],
-          },
-          {
-            date: {
-              $gte: startOfDay,
-              $lt: endOfDay,
-            },
-          },
-        ],
-      })
-        .populate("userRef", "email phone username")
-        .populate("scheduleRef", "name");
-
-      for (let booking of relevantBookings) {
-        if (booking.userRef) {
-          userScheduleData.push({
-            username: booking.userRef.username,
-            email: booking.userRef.email,
-            schedule: booking.scheduleRef.name,
-            haltNames: [halt.stationRef.name],
-          });
-        }
-      }
-    }
+    const { affectedHaltIds, haltIdToNameMap } = await getAffectedHalts(notifyAll, { scheduleId: scheduleId, haltOrderNumber: haltOrderNumber, haltId:haltId });
+    const relevantBookings = await getRelevantBookings(affectedHaltIds, startOfDay, endOfDay);
+    const userScheduleData = buildUserScheduleData(relevantBookings, haltIdToNameMap, affectedHaltIds);
 
     // Send reschedule email
     await sendTimeReschedule(userScheduleData, time);
-    res
-      .status(200)
-      .json({ message: "Passengers have been notified successfully." });
+    res.status(200).json({ message: "Passengers have been notified successfully." });
   } catch (error) {
     console.error("Error changing time:", error);
     res.status(500).json({ error: "Failed to notify passengers." });

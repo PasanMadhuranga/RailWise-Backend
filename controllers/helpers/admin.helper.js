@@ -3,6 +3,7 @@ import User from "../../models/user.model.js";
 import ExpressError from "../../utils/ExpressError.utils.js";
 import nodemailer from "nodemailer";
 import axios from "axios";
+import Halt from "../../models/halt.model.js";
 
 export const monthNames = [
   "Jan",
@@ -105,10 +106,10 @@ export const performAggregation = async (
   });
 };
 
+
 export const sendPlatformReschedule = async (
   userScheduleData,
   platform,
-  haltName
 ) => {
   // Create a transporter
   let transporter = nodemailer.createTransport({
@@ -118,11 +119,10 @@ export const sendPlatformReschedule = async (
       pass: process.env.APP_PASSWORD, // Your app-specific password
     },
   });
-
   // Loop through each user data and send the notification
-  for (let { username, email, schedule, phone } of userScheduleData) {
+  for (let { username, email, schedule, phone, haltNames } of userScheduleData) {
     // Email content
-    const message = `Dear ${username},\n\nFor schedule "${schedule}", the platform has been changed to ${platform} on ${haltName}.\n\nRegards,\nRailWise Team`;
+    const message = `Dear ${username},\n\nFor schedule "${schedule}", the platform has been changed to ${platform} on ${haltNames[0]}.\n\nRegards,\nRailWise Team`;
     // const message = `For schedule "${schedule}", the platform has been changed to ${platform} on ${haltName}.`;
     let mailOptions = {
       from: process.env.EMAIL,
@@ -130,7 +130,7 @@ export const sendPlatformReschedule = async (
       subject: "Platform Change Notification",
       text: message,
     };
-
+    
     try {
       // Send the email
       await transporter.sendMail(mailOptions);
@@ -201,4 +201,96 @@ export const sendRescheduleSMS = async (phoneNumber, message) => {
   }
 };
 
+export const getDayRange = (date) => {
+  const startOfDay = new Date(date);
+  // startOfDay.setDate(startOfDay.getDate() + 1);
+  startOfDay.setUTCHours(0, 0, 0, 0);
 
+  const endOfDay = new Date(date);
+  // endOfDay.setDate(endOfDay.getDate() + 1);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  return { startOfDay, endOfDay };
+};
+
+
+
+export const getAffectedHalts = async (notifyAll, { scheduleId, haltOrderNumber, haltId }) => {
+  let affectedHalts = [];
+
+  if (notifyAll) {
+    if (!scheduleId || !haltOrderNumber) {
+      throw new Error("scheduleId and haltOrderNumber are required when notifyAll is true.");
+    }
+    
+    // Find all halts when notifyAll is true
+    affectedHalts = await Halt.find({
+      scheduleRef: scheduleId,
+      haltOrder: { $gte: haltOrderNumber },
+    })
+      .populate("stationRef", "name")
+      .sort({ haltOrder: 1 });
+  } else {
+    if (!haltId) {
+      throw new Error("haltId is required when notifyAll is false.");
+    }
+    
+    // Find a single halt by its haltId when notifyAll is false
+    const affectedHalt = await Halt.findById(haltId).populate("stationRef", "name");
+
+    // Convert the single halt to an array to keep the result consistent
+    if (affectedHalt) {
+      affectedHalts.push(affectedHalt);
+    }
+  }
+
+  // Create a map from haltId to station name
+  const haltIdToNameMap = affectedHalts.reduce((map, halt) => {
+    map[halt._id] = halt.stationRef.name;
+    return map;
+  }, {});
+
+  const affectedHaltIds = affectedHalts.map(halt => halt._id.toString());
+
+  return { affectedHaltIds, haltIdToNameMap };
+};
+
+export const getRelevantBookings = async (affectedHaltIds, startOfDay, endOfDay) => {
+  return Booking.find({
+    $and: [
+      {
+        $or: [
+          { startHalt: { $in: affectedHaltIds } },
+          { endHalt: { $in: affectedHaltIds } },
+        ],
+      },
+      {
+        date: {
+          $gte: startOfDay,
+          $lt: endOfDay,
+        },
+      },
+    ],
+  })
+    .populate("userRef", "email phone username")
+    .populate("scheduleRef", "name");
+};
+
+export const buildUserScheduleData = (bookings, haltIdToNameMap, affectedHaltIds) => {
+  return bookings.map((booking) => {
+    const userHaltNames = [];
+    if (affectedHaltIds.includes(booking.startHalt.toString())) {
+      userHaltNames.push(haltIdToNameMap[booking.startHalt.toString()]);
+    }
+    if (affectedHaltIds.includes(booking.endHalt.toString())) {
+      userHaltNames.push(haltIdToNameMap[booking.endHalt.toString()]);
+    }
+    return {
+      username: booking.userRef.username,
+      email: booking.userRef.email,
+      schedule: booking.scheduleRef.name,
+      haltNames: userHaltNames,
+      phone: booking.userRef.phone,
+    };
+  });
+};
