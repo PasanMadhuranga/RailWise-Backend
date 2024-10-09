@@ -2,29 +2,19 @@ import Admin from "../models/admin.model.js";
 
 const admins = [
   {
-    username: "roshan234",
-    email: "roshan@example.com",
-    password: "password123",
+    username: "FirstAdmin",
+    email: "FirstAdmin@example.com",
+    password: "FirstAdmin",
   },
   {
-    username: "dinusha567",
-    email: "dinusha@example.com",
-    password: "password456",
+    username: "SecondAdmin",
+    email: "SecondAdmin@example.com",
+    password: "SecondAdmin",
   },
   {
-    username: "janaka890",
-    email: "janaka@example.com",
-    password: "password789",
-  },
-  {
-    username: "tharushi234",
-    email: "tharushi@example.com",
-    password: "password234",
-  },
-  {
-    username: "isuru567",
-    email: "isuru@example.com",
-    password: "password567",
+    username: "ThirdAdmin",
+    email: "ThirdAdmin@example.com",
+    password: "ThirdAdmin",
   },
 ];
 
