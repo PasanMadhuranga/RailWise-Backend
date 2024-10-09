@@ -120,9 +120,9 @@ export const sendPlatformReschedule = async (
     },
   });
   // Loop through each user data and send the notification
-  for (let { username, email, schedule, phone, haltNames } of userScheduleData) {
+  for (let { username, email, schedule, phone, haltNames, train } of userScheduleData) {
     // Email content
-    const message = `Dear ${username},\n\nFor schedule "${schedule}", the platform has been changed to ${platform} on ${haltNames[0]}.\n\nRegards,\nRailWise Team`;
+    const message = `Hello ${username},\n\nPlease note that for the schedule "${schedule}" of the train "${train}", the platform has been updated to ${platform} at the station ${haltNames[0]}.\n\nBest regards,\nRailWise Team`;
     // const message = `For schedule "${schedule}", the platform has been changed to ${platform} on ${haltName}.`;
     let mailOptions = {
       from: process.env.EMAIL,
@@ -157,10 +157,10 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
   });
 
   // Loop through each user data and send the notification
-  for (let { username, email, schedule, haltNames, phone } of userScheduleData) {
+  for (let { username, email, schedule, haltNames, phone, train } of userScheduleData) {
     // Construct halt names string
     const haltNamesText = haltNames.join(" and ");
-    const message = `Dear ${username},\n\nFor schedule "${schedule}", the time has been delayed by ${time} minutes at ${haltNamesText}.\n\nRegards,\nRailWise Team`
+    const message = `Hello ${username},\n\nWe would like to inform you that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNamesText}.\n\nBest regards,\nRailWise Team`;
     // Email content
     let mailOptions = {
       from: process.env.EMAIL,
@@ -273,7 +273,16 @@ export const getRelevantBookings = async (affectedHaltIds, startOfDay, endOfDay)
     ],
   })
     .populate("userRef", "email phone username")
-    .populate("scheduleRef", "name");
+    .populate(
+      {
+        path: "scheduleRef",
+        select: "name trainRef",
+        populate: {
+          path: "trainRef",
+          select: "name",
+        },
+      }
+    );
 };
 
 export const buildUserScheduleData = (bookings, haltIdToNameMap, affectedHaltIds) => {
@@ -291,6 +300,7 @@ export const buildUserScheduleData = (bookings, haltIdToNameMap, affectedHaltIds
       schedule: booking.scheduleRef.name,
       haltNames: userHaltNames,
       phone: booking.userRef.phone,
+      train: booking.scheduleRef.trainRef.name,
     };
   });
 };
