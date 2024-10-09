@@ -369,8 +369,7 @@ export const getSchedulesDetails = async (req, res, next) => {
 };
 
 export const getSchedules = async (req, res, next) => {
-  const schedules = await Schedule.find().select("name").sort({ name: 1 });
-
+  const schedules = await Schedule.find().select("name trainRef").populate("trainRef", "name").sort({ name: 1 });
   res.status(200).json({ schedules });
 };
 
