@@ -158,9 +158,12 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
 
   // Loop through each user data and send the notification
   for (let { username, email, schedule, haltNames, phone, train } of userScheduleData) {
-    // Construct halt names string
-    const haltNamesText = haltNames.join(" and ");
-    const message = `Hello ${username},\n\nWe would like to inform you that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNamesText}.\n\nBest regards,\nRailWise Team`;
+    let message;
+    if (haltNames.length === 1) {
+      message = `Hello ${username},\n\nPlease be informed that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNames[0]}. However, this delay will not affect all subsequent stations.\n\nBest regards,\nRailWise Team`;
+    } else {
+      message = `Hello ${username},\n\nPlease be advised that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNames[0]}. This delay will affect all upcoming stations, including your destination at ${haltNames[1]}.\n\nBest regards,\nRailWise Team`;
+    }
     // Email content
     let mailOptions = {
       from: process.env.EMAIL,
