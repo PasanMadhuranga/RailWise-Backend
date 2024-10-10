@@ -1,4 +1,4 @@
-# Stage 1: Build the React app
+# Stage 1: Build the Node.js app
 FROM node:18 AS build
 
 # Set the working directory inside the container
@@ -13,17 +13,11 @@ RUN npm install
 # Copy all other files to the container
 COPY . .
 
-# Build the app
-RUN npm run build
+# If your project requires a build step (e.g., if you are using TypeScript)
+# RUN npm run build
 
-# Stage 2: Serve the app using a lightweight web server
-FROM nginx:alpine
+# Expose the port that your Node.js app listens on
+EXPOSE 3000
 
-# Copy the built files from the previous stage to the Nginx directory
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Expose port 80 to the outside world
-EXPOSE 80
-
-# Start Nginx when the container starts
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Node.js application
+CMD ["npm", "start"]
