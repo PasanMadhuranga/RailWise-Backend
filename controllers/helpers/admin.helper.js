@@ -277,11 +277,7 @@ export const getRelevantBookings = async (affectedHaltIds, startOfDay, endOfDay)
     .populate(
       {
         path: "scheduleRef",
-        select: "name trainRef",
-        populate: {
-          path: "trainRef",
-          select: "name",
-        },
+        select: "name",
       }
     );
 };
@@ -301,7 +297,7 @@ export const buildUserScheduleData = (bookings, haltIdToNameMap, affectedHaltIds
       schedule: booking.scheduleRef.name,
       haltNames: userHaltNames,
       phone: booking.userRef.phone,
-      train: booking.scheduleRef.trainRef.name,
+      train: booking.scheduleRef.name,
     };
   });
 };
