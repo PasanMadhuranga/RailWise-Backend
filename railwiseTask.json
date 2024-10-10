@@ -1,0 +1,24 @@
+{
+  "family": "railwiseTask",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "executionRoleArn": "arn:aws:iam::940482421209:role/railwiseExecutionRole",
+  "cpu": "256",               
+  "memory": "512",             
+  "containerDefinitions": [
+    {
+      "name": "railwiseBackendContainer",
+      "image": "REPOSITORY_URI:IMAGE_TAG",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ]
+}
