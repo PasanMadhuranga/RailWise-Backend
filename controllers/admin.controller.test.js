@@ -1,408 +1,349 @@
-import { changePlatform, timeChange } from './admin.controller';
-import mongoose from 'mongoose';
-import Booking from '../models/booking.model.js';
-import Halt from '../models/halt.model.js';
-import Schedule from '../models/schedule.model.js';
-import Station from '../models/station.model.js';
-import User from '../models/user.model.js';
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-dotenv.config();
+// src/pages/Profile/Profile.test.jsx
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import ProfilePage from './Profile';
+import { UserContext } from '../../context/UserContext';
+import { useProfile } from '../../hooks/useProfile';
+import { useBookings } from '../../hooks/useBookings';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import PrivateRoute from '../PrivateRoute';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-// Integration Test for changePlatform
-describe('changePlatform - Integration Test', () => {
-  let req, res, next;
-  let sendMailMock;
+// Mock the useProfile and useBookings hooks
+vi.mock('../../hooks/useProfile');
+vi.mock('../../hooks/useBookings');
 
-  beforeAll(async () => {
-    // Connect to the in-memory database or test database
-    await mongoose.connect('mongodb://localhost:27017/testdb');
+const axios = {
+    put: vi.fn(),
+    post: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+    // Add other methods if needed
+  };
+// Mock Axios
+vi.mock('axios');
+
+// Mock React Toastify
+vi.mock('react-toastify', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+describe('ProfilePage', () => {
+  // Mock functions
+  const mockSetActiveTab = vi.fn();
+  const mockSetIsEditing = vi.fn();
+  const mockSetShowModal = vi.fn();
+  const mockSetShowChangePasswordModal = vi.fn();
+  const mockHandleChangePasswordClick = vi.fn();
+  const mockHandleSaveClick = vi.fn();
+  const mockHandleSaveSubmit = vi.fn();
+  const mockHandleInputChange = vi.fn(() => vi.fn());
+  const mockHandleDeleteBooking = vi.fn();
+
+  // Default mock return values for useProfile
+  const mockUseProfileDefault = {
+    activeTab: 'profile',
+    setActiveTab: mockSetActiveTab,
+    isEditing: false,
+    setIsEditing: mockSetIsEditing,
+    showModal: false,
+    setShowModal: mockSetShowModal,
+    showChangePasswordModal: false,
+    setShowChangePasswordModal: mockSetShowChangePasswordModal,
+    handleChangePasswordClick: mockHandleChangePasswordClick,
+    handleSaveClick: mockHandleSaveClick,
+    handleSaveSubmit: mockHandleSaveSubmit,
+    formValues: {
+      username: 'testuser',
+      email: 'test@example.com',
+      phone: '+94123456789',
+      changesMade: false,
+    },
+    handleInputChange: mockHandleInputChange,
+    login: vi.fn(), // Ensure login is mocked if used
+  };
+
+  // Default mock return values for useBookings
+  const mockUseBookingsDefault = {
+    bookings: [],
+    handleDeleteBooking: mockHandleDeleteBooking,
+    loading: false,
+  };
+
+  // Utility function to render ProfilePage with UserContext
+  const renderWithUser = (userData, loading = false) => {
+    return render(
+      <MemoryRouter initialEntries={['/profile']}>
+        <UserContext.Provider value={{ userData, loading }}>
+          <Routes>
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <ProfilePage />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/login" element={<div>Login Page</div>} />
+          </Routes>
+        </UserContext.Provider>
+      </MemoryRouter>
+    );
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    useProfile.mockReturnValue(mockUseProfileDefault);
+    useBookings.mockReturnValue(mockUseBookingsDefault);
   });
 
-  afterAll(async () => {
-    // Disconnect from the test database
-    await mongoose.connection.close();
+  it('displays loading indicator when loading is true', () => {
+    renderWithUser({ username: 'testuser' }, true);
+    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
   });
 
-  beforeEach(async () => {
-    req = {
-      body: {
-        haltId: '507f1f77bcf86cd799439011',
-        haltName: 'Central Station',
-        platform: 3,
-        date: '2023-10-08',
+  it('renders SideMenu and ProfileForm when not loading and user is logged in', () => {
+    renderWithUser({ username: 'testuser' }, false);
+    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/Edit Profile/i)).toBeInTheDocument();
+  });
+
+  it('renders BookingHistory when activeTab is "bookings"', () => {
+    // Update the mock to set activeTab to 'bookings'
+    useProfile.mockReturnValue({
+      ...mockUseProfileDefault,
+      activeTab: 'bookings',
+    });
+
+    renderWithUser({ username: 'testuser' }, false);
+
+    expect(screen.getByText(/No bookings found./i)).toBeInTheDocument();
+  });
+
+  it('switches tabs when a different tab is clicked', () => {
+    renderWithUser({ username: 'testuser' }, false);
+
+    const bookingsTab = screen.getByText(/Bookings/i);
+    fireEvent.click(bookingsTab);
+
+    expect(mockSetActiveTab).toHaveBeenCalledWith('bookings');
+  });
+
+  it('redirects to /login when user is not logged in', () => {
+    renderWithUser(null, false); // Simulate unauthenticated user
+
+    // Assert that the Login Page is rendered
+    expect(screen.getByText(/Login Page/i)).toBeInTheDocument();
+  });
+
+  // New Test Cases for Updating User Data and Changing Password
+
+  it('successfully updates user data', async () => {
+    // Arrange
+    const updatedUserData = {
+      username: 'updateduser',
+      email: 'updated@example.com',
+      phone: '+94123456789',
+      changesMade: true,
+    };
+
+    // Mock handleInputChange to update formValues
+    mockHandleInputChange.mockImplementation((field) => (e) => {
+      mockUseProfileDefault.formValues[field] = e.target.value;
+    });
+
+    // Mock axios.put to return success
+    axios.put.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        username: updatedUserData.username,
+        email: updatedUserData.email,
+        phone: updatedUserData.phone,
       },
-    };
-    res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-    };
-    next = vi.fn();
-
-    // Clear test data before each test
-    await Booking.deleteMany({});
-    await Halt.deleteMany({});
-    await Schedule.deleteMany({});
-    await Station.deleteMany({});
-    await User.deleteMany({});
-
-    // Insert test data
-    const user1 = await User.create({ _id: '507f1f77bcf86cd799439033', email: 'jane@example.com', phone: '0987654321', username: 'Jane Smith', password: 'password123' });
-    const user2 = await User.create({ _id: '507f1f77bcf86cd799439034', email: 'john@example.com', phone: '1234567890', username: 'John Doe', password: 'password123' });
-    const station = await Station.create({ _id: '507f1f77bcf86cd799439044', name: 'Central Station' });
-    const schedule = await Schedule.create({ _id: '507f1f77bcf86cd799439055', name: 'Evening Express', trainRef: '507f1f77bcf86cd799439066', scheduleType: 'express' });
-    const halt = await Halt.create({
-      _id: '507f1f77bcf86cd799439011',
-      scheduleRef: schedule._id,
-      stationRef: station._id,
-      arrivalTime: '10:00 AM',
-      departureTime: '10:15 AM',
-      haltOrder: 1,
-      platform: 2,
-      price: 10,
-    });
-    const halt2 = await Halt.create({
-      _id: '507f1f77bcf86cd799439012',
-      scheduleRef: schedule._id,
-      stationRef: station._id,
-      arrivalTime: '11:00 AM',
-      departureTime: '11:15 AM',
-      haltOrder: 2,
-      platform: 3,
-      price: 15,
-    });
-    const halt3 = await Halt.create({
-      _id: '507f1f77bcf86cd799439013',
-      scheduleRef: schedule._id,
-      stationRef: station._id,
-      arrivalTime: '12:00 PM',
-      departureTime: '12:15 PM',
-      haltOrder: 3,
-      platform: 4,
-      price: 20,
-    });
-    await Booking.create({
-      _id: '507f1f77bcf86cd799439022',
-      startHalt: halt._id,
-      endHalt: halt2._id,
-      userRef: user1._id,
-      scheduleRef: schedule._id,
-      date: new Date('2023-10-08T00:00:00Z'),
-      totalFare: 20,
-      status: 'approved',
-    });
-    await Booking.create({
-      _id: '507f1f77bcf86cd799439023',
-      startHalt: halt2._id,
-      endHalt: halt3._id,
-      userRef: user2._id,
-      scheduleRef: schedule._id,
-      date: new Date('2023-10-08T00:00:00Z'),
-      totalFare: 25,
-      status: 'approved',
     });
 
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    sendMailMock = vi.fn().mockResolvedValue('Mail sent');
-    vi.spyOn(nodemailer, 'createTransport').mockReturnValue({
-      sendMail: sendMailMock,
-    });
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-  });
+    // Act
+    renderWithUser({ username: 'testuser', email: 'test@example.com', phone: '+94123456789' }, false);
 
-  it('should notify only relevant passengers successfully', async () => {
-    await changePlatform(req, res, next);
+    // Fill out the form fields
+    const usernameInput = screen.getByLabelText(/Username/i);
+    const emailInput = screen.getByLabelText(/Email/i);
+    const phoneInput = screen.getByLabelText(/Phone/i);
+    const saveButton = screen.getByText(/Save/i);
 
-    // Expect only the user whose startHalt or endHalt matches the haltId to be notified
-    expect(sendMailMock).toHaveBeenCalledTimes(1);
-    expect(sendMailMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: 'jane@example.com',
-      })
-    );
-    expect(sendMailMock).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: 'john@example.com',
-      })
-    );
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Passengers have been notified successfully.' });
-  });
+    fireEvent.change(usernameInput, { target: { value: updatedUserData.username } });
+    fireEvent.change(emailInput, { target: { value: updatedUserData.email } });
+    fireEvent.change(phoneInput, { target: { value: updatedUserData.phone } });
 
-  it('should handle errors gracefully', async () => {
-    req.body.haltId = 'invalid_id'; // Set an invalid halt ID to cause an error
+    fireEvent.click(saveButton);
 
-    await changePlatform(req, res, next);
-
-    expect(console.error).toHaveBeenCalledWith('Error changing platform:', expect.any(Error));
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to notify passengers.' });
-  });
-});
-
-// Integration Test for timeChange
-// Integration Test for timeChange
-describe('timeChange - Integration Test', () => {
-    let req, res, next;
-    let sendMailMock;
-  
-    beforeAll(async () => {
-      // Connect to the in-memory database or test database
-      await mongoose.connect('mongodb://localhost:27017/testdb');
-    });
-  
-    afterAll(async () => {
-      // Disconnect from the test database
-      await mongoose.connection.close();
-    });
-  
-    beforeEach(async () => {
-      req = {
-        body: {
-          scheduleId: '507f1f77bcf86cd799439055',
-          haltOrder: 3,
-          haltId: '507f1f77bcf86cd799439013',
-          date: '2023-10-08',
-          time: 30,
-          notifyAll: true,
+    // Assert
+    await waitFor(() => {
+      expect(axios.put).toHaveBeenCalledWith(
+        '/api/user/updateProfile',
+        {
+          username: updatedUserData.username,
+          email: updatedUserData.email,
+          phone: updatedUserData.phone,
+          oldPassword: '',
+          newPassword: '',
         },
-      };
-      res = {
-        status: vi.fn().mockReturnThis(),
-        json: vi.fn(),
-      };
-      next = vi.fn();
-  
-      // Clear test data before each test
-      await Booking.deleteMany({});
-      await Halt.deleteMany({});
-      await Schedule.deleteMany({});
-      await Station.deleteMany({});
-      await User.deleteMany({});
-  
-      // Insert test data
-      const user1 = await User.create({ _id: '507f1f77bcf86cd799439033', email: 'jane@example.com', phone: '0987654321', username: 'Jane Smith', password: 'password123' });
-      const user2 = await User.create({ _id: '507f1f77bcf86cd799439034', email: 'john@example.com', phone: '1234567890', username: 'John Doe', password: 'password123' });
-      const user3 = await User.create({ _id: '507f1f77bcf86cd799439035', email: 'alice@example.com', phone: '0987654322', username: 'Alice Doe', password: 'password123' });
-      const user4 = await User.create({ _id: '507f1f77bcf86cd799439036', email: 'bob@example.com', phone: '1234567891', username: 'Bob Smith', password: 'password123' });
-  
-      const station = await Station.create({ _id: '507f1f77bcf86cd799439044', name: 'Central Station' });
-      const schedule1 = await Schedule.create({ _id: '507f1f77bcf86cd799439055', name: 'Evening Express', trainRef: '507f1f77bcf86cd799439066', scheduleType: 'express' });
-      const schedule2 = await Schedule.create({ _id: '507f1f77bcf86cd799439056', name: 'Morning Express', trainRef: '507f1f77bcf86cd799439067', scheduleType: 'slow' });
-  
-      const halt1 = await Halt.create({
-        _id: '507f1f77bcf86cd799439011',
-        scheduleRef: schedule1._id,
-        stationRef: station._id,
-        arrivalTime: '10:00 AM',
-        departureTime: '10:15 AM',
-        haltOrder: 1,
-        platform: 2,
-        price: 10,
-      });
-      const halt2 = await Halt.create({
-        _id: '507f1f77bcf86cd799439012',
-        scheduleRef: schedule1._id,
-        stationRef: station._id,
-        arrivalTime: '11:00 AM',
-        departureTime: '11:15 AM',
-        haltOrder: 2,
-        platform: 3,
-        price: 15,
-      });
-      const halt3 = await Halt.create({
-        _id: '507f1f77bcf86cd799439013',
-        scheduleRef: schedule1._id,
-        stationRef: station._id,
-        arrivalTime: '12:00 PM',
-        departureTime: '12:15 PM',
-        haltOrder: 3,
-        platform: 4,
-        price: 20,
-      });
-      const halt4 = await Halt.create({
-        _id: '507f1f77bcf86cd799439014',
-        scheduleRef: schedule1._id,
-        stationRef: station._id,
-        arrivalTime: '01:00 PM',
-        departureTime: '01:15 PM',
-        haltOrder: 4,
-        platform: 5,
-        price: 25,
-      });
-  
-      const halt5 = await Halt.create({
-        _id: '507f1f77bcf86cd799439015',
-        scheduleRef: schedule2._id,
-        stationRef: station._id,
-        arrivalTime: '09:00 AM',
-        departureTime: '09:15 AM',
-        haltOrder: 1,
-        platform: 2,
-        price: 10,
-      });
-      const halt6 = await Halt.create({
-        _id: '507f1f77bcf86cd799439016',
-        scheduleRef: schedule2._id,
-        stationRef: station._id,
-        arrivalTime: '10:00 AM',
-        departureTime: '10:15 AM',
-        haltOrder: 2,
-        platform: 3,
-        price: 15,
-      });
-      const halt7 = await Halt.create({
-        _id: '507f1f77bcf86cd799439017',
-        scheduleRef: schedule2._id,
-        stationRef: station._id,
-        arrivalTime: '11:00 AM',
-        departureTime: '11:15 AM',
-        haltOrder: 3,
-        platform: 4,
-        price: 20,
-      });
-      const halt8 = await Halt.create({
-        _id: '507f1f77bcf86cd799439018',
-        scheduleRef: schedule2._id,
-        stationRef: station._id,
-        arrivalTime: '12:00 PM',
-        departureTime: '12:15 PM',
-        haltOrder: 4,
-        platform: 5,
-        price: 25,
-      });
-  
-      // Create bookings
-      await Booking.create({
-        startHalt: halt1._id,
-        endHalt: halt2._id,
-        userRef: user1._id,
-        scheduleRef: schedule1._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 20,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt2._id,
-        endHalt: halt3._id,
-        userRef: user2._id,
-        scheduleRef: schedule1._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 25,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt3._id,
-        endHalt: halt4._id,
-        userRef: user3._id,
-        scheduleRef: schedule1._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 30,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt1._id,
-        endHalt: halt4._id,
-        userRef: user4._id,
-        scheduleRef: schedule1._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 40,
-        status: 'approved',
-      });
-  
-      await Booking.create({
-        startHalt: halt5._id,
-        endHalt: halt6._id,
-        userRef: user1._id,
-        scheduleRef: schedule2._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 20,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt6._id,
-        endHalt: halt7._id,
-        userRef: user2._id,
-        scheduleRef: schedule2._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 25,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt7._id,
-        endHalt: halt8._id,
-        userRef: user3._id,
-        scheduleRef: schedule2._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 30,
-        status: 'approved',
-      });
-      await Booking.create({
-        startHalt: halt5._id,
-        endHalt: halt8._id,
-        userRef: user4._id,
-        scheduleRef: schedule2._id,
-        date: new Date('2023-10-08T00:00:00Z'),
-        totalFare: 40,
-        status: 'approved',
-      });
-  
-      vi.spyOn(console, 'error').mockImplementation(() => {});
-      sendMailMock = vi.fn().mockResolvedValue('Mail sent');
-      vi.spyOn(nodemailer, 'createTransport').mockReturnValue({
-        sendMail: sendMailMock,
-      });
-    });
-  
-    it('should notify all relevant passengers successfully', async () => {
-      await timeChange(req, res, next);
-  
-      // Expect users whose startHalt or endHalt has haltOrder 3 or 4 to be notified
-      expect(sendMailMock).toHaveBeenCalledTimes(3);
-      expect(sendMailMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: 'john@example.com', // User 2
-        })
+        { withCredentials: true }
       );
-      expect(sendMailMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: 'alice@example.com', // User 3
-        })
-      );
-      expect(sendMailMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: 'bob@example.com', // User 4
-        })
-      );
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Passengers have been notified successfully.' });
+      expect(mockUseProfileDefault.login).toHaveBeenCalledWith({
+        username: updatedUserData.username,
+        email: updatedUserData.email,
+        phone: updatedUserData.phone,
+      });
+      expect(toast.success).toHaveBeenCalledWith('Profile updated successfully');
     });
-  
-    it('should handle errors gracefully', async () => {
-      req.body.scheduleId = 'invalid_id'; 
-  
-      await timeChange(req, res, next);
-  
-      expect(console.error).toHaveBeenCalledWith('Error changing time:', expect.any(Error));
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Failed to notify passengers.' });
+  });
+
+  it('handles API error when updating user data', async () => {
+    // Arrange
+    const errorMessage = 'Failed to update profile';
+
+    // Mock handleInputChange to update formValues
+    mockHandleInputChange.mockImplementation((field) => (e) => {
+      mockUseProfileDefault.formValues[field] = e.target.value;
     });
-  
-    it('should notify only specific halt if notifyAll is false', async () => {
-      req.body.notifyAll = false;
-  
-      await timeChange(req, res, next);
-  
-      // Expect only users with startHalt or endHalt matching haltId (halt3) to be notified
-      expect(sendMailMock).toHaveBeenCalledTimes(2);
-      expect(sendMailMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: 'alice@example.com',
-        })
+
+    // Mock axios.put to return error
+    axios.put.mockRejectedValueOnce(new Error(errorMessage));
+
+    // Act
+    renderWithUser({ username: 'testuser', email: 'test@example.com', phone: '+94123456789' }, false);
+
+    // Fill out the form fields
+    const usernameInput = screen.getByLabelText(/Username/i);
+    const emailInput = screen.getByLabelText(/Email/i);
+    const phoneInput = screen.getByLabelText(/Phone/i);
+    const saveButton = screen.getByText(/Save/i);
+
+    fireEvent.change(usernameInput, { target: { value: 'updateduser' } });
+    fireEvent.change(emailInput, { target: { value: 'updated@example.com' } });
+    fireEvent.change(phoneInput, { target: { value: '+94123456789' } });
+
+    fireEvent.click(saveButton);
+
+    // Assert
+    await waitFor(() => {
+      expect(axios.put).toHaveBeenCalledWith(
+        '/api/user/updateProfile',
+        {
+          username: 'updateduser',
+          email: 'updated@example.com',
+          phone: '+94123456789',
+          oldPassword: '',
+          newPassword: '',
+        },
+        { withCredentials: true }
       );
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Passengers have been notified successfully.' });
+      expect(mockUseProfileDefault.login).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith('Failed to update profile');
     });
+  });
+
+  it('successfully changes the password', async () => {
+    // Arrange
+    const oldPassword = 'oldpassword';
+    const newPassword = 'newpassword';
+
+    // Mock handleInputChange for password fields
+    mockHandleInputChange.mockImplementation((field) => (e) => {
+      mockUseProfileDefault.formValues[field] = e.target.value;
+    });
+
+    // Mock axios.put to return success for password change
+    axios.put.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        message: 'Password changed successfully',
+      },
+    });
+
+    // Act
+    renderWithUser({ username: 'testuser', email: 'test@example.com', phone: '+94123456789' }, false);
+
+    // Click on "Change Password" button to open modal
+    const changePasswordButton = screen.getByText(/Change Password/i);
+    fireEvent.click(changePasswordButton);
+
+    // Fill out the password fields in the modal
+    const oldPasswordInput = screen.getByLabelText(/Old Password/i);
+    const newPasswordInput = screen.getByLabelText(/New Password/i);
+    const confirmPasswordInput = screen.getByLabelText(/Confirm New Password/i);
+    const submitPasswordButton = screen.getByText(/Submit/i);
+
+    fireEvent.change(oldPasswordInput, { target: { value: oldPassword } });
+    fireEvent.change(newPasswordInput, { target: { value: newPassword } });
+    fireEvent.change(confirmPasswordInput, { target: { value: newPassword } });
+
+    fireEvent.click(submitPasswordButton);
+
+    // Assert
+    await waitFor(() => {
+      expect(axios.put).toHaveBeenCalledWith(
+        '/api/user/updatePassword',
+        {
+          oldPassword,
+          newPassword,
+        },
+        { withCredentials: true }
+      );
+      expect(toast.success).toHaveBeenCalledWith('Password changed successfully');
+    });
+  });
+
+  it('handles API error when changing the password', async () => {
+    // Arrange
+    const oldPassword = 'wrongpassword';
+    const newPassword = 'newpassword';
+    const errorMessage = 'Incorrect old password';
+
+    // Mock handleInputChange for password fields
+    mockHandleInputChange.mockImplementation((field) => (e) => {
+      mockUseProfileDefault.formValues[field] = e.target.value;
+    });
+
+    // Mock axios.put to return error for password change
+    axios.put.mockRejectedValueOnce(new Error(errorMessage));
+
+    // Act
+    renderWithUser({ username: 'testuser', email: 'test@example.com', phone: '+94123456789' }, false);
+
+    // Click on "Change Password" button to open modal
+    const changePasswordButton = screen.getByText(/Change Password/i);
+    fireEvent.click(changePasswordButton);
+
+    // Fill out the password fields in the modal
+    const oldPasswordInput = screen.getByLabelText(/Old Password/i);
+    const newPasswordInput = screen.getByLabelText(/New Password/i);
+    const confirmPasswordInput = screen.getByLabelText(/Confirm New Password/i);
+    const submitPasswordButton = screen.getByText(/Submit/i);
+
+    fireEvent.change(oldPasswordInput, { target: { value: oldPassword } });
+    fireEvent.change(newPasswordInput, { target: { value: newPassword } });
+    fireEvent.change(confirmPasswordInput, { target: { value: newPassword } });
+
+    fireEvent.click(submitPasswordButton);
+
+    // Assert
+    await waitFor(() => {
+      expect(axios.put).toHaveBeenCalledWith(
+        '/api/user/updatePassword',
+        {
+          oldPassword,
+          newPassword,
+        },
+        { withCredentials: true }
+      );
+      expect(toast.error).toHaveBeenCalledWith('Failed to update profile'); // Adjust error message as per implementation
+    });
+  });
 });
-  

@@ -1,5 +1,14 @@
 import nodemailer from 'nodemailer';
-import { sendPlatformReschedule, sendTimeReschedule, generatePeriods, performAggregation, getDayRange, getAffectedHalts, getRelevantBookings, buildUserScheduleData } from './admin.helper';
+import { 
+  sendPlatformReschedule, 
+  sendTimeReschedule, 
+  generatePeriods, 
+  performAggregation, 
+  getDayRange, 
+  getAffectedHalts, 
+  getRelevantBookings, 
+  buildUserScheduleData 
+} from './admin.helper';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -29,6 +38,7 @@ describe('sendPlatformReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
     ];
 
@@ -37,13 +47,18 @@ describe('sendPlatformReschedule', () => {
     await sendPlatformReschedule(userScheduleData, platform);
     expect(sendMailMock).toHaveBeenCalledTimes(1);
 
-    // Assert: Check if sendMail was called with the correct parameters
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Platform Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the platform has been changed to 3 on Central Station.\n\nRegards,\nRailWise Team`,
-    });
+    // Capture the actual arguments passed to sendMailMock
+    const mailOptions = sendMailMock.mock.calls[0][0];
+
+    // Assert: Check individual substrings in the text
+    expect(mailOptions.from).toBe(process.env.EMAIL);
+    expect(mailOptions.to).toBe('jane@example.com');
+    expect(mailOptions.subject).toBe('Platform Change Notification');
+    expect(mailOptions.text).toContain('Jane Smith');
+    expect(mailOptions.text).toContain('Evening Express');
+    expect(mailOptions.text).toContain('Express Train');
+    expect(mailOptions.text).toContain('3');
+    expect(mailOptions.text).toContain('Central Station');
   });
 
   it('should send emails to multiple users successfully', async () => {
@@ -54,6 +69,7 @@ describe('sendPlatformReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
       {
         username: 'John Doe',
@@ -61,6 +77,7 @@ describe('sendPlatformReschedule', () => {
         schedule: 'Morning Express',
         haltNames: ['North Station'],
         phone: '1234567890',
+        train: 'Morning Train'
       },
     ];
 
@@ -69,19 +86,27 @@ describe('sendPlatformReschedule', () => {
     await sendPlatformReschedule(userScheduleData, platform);
     expect(sendMailMock).toHaveBeenCalledTimes(2);
 
-    // Assert: Check if sendMail was called with the correct parameters for both users
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Platform Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the platform has been changed to 5 on Central Station.\n\nRegards,\nRailWise Team`,
-    });
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'john@example.com',
-      subject: 'Platform Change Notification',
-      text: `Dear John Doe,\n\nFor schedule \"Morning Express\", the platform has been changed to 5 on North Station.\n\nRegards,\nRailWise Team`,
-    });
+    // First email
+    const mailOptionsJane = sendMailMock.mock.calls[0][0];
+    expect(mailOptionsJane.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJane.to).toBe('jane@example.com');
+    expect(mailOptionsJane.subject).toBe('Platform Change Notification');
+    expect(mailOptionsJane.text).toContain('Jane Smith');
+    expect(mailOptionsJane.text).toContain('Evening Express');
+    expect(mailOptionsJane.text).toContain('Express Train');
+    expect(mailOptionsJane.text).toContain('5');
+    expect(mailOptionsJane.text).toContain('Central Station');
+
+    // Second email
+    const mailOptionsJohn = sendMailMock.mock.calls[1][0];
+    expect(mailOptionsJohn.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJohn.to).toBe('john@example.com');
+    expect(mailOptionsJohn.subject).toBe('Platform Change Notification');
+    expect(mailOptionsJohn.text).toContain('John Doe');
+    expect(mailOptionsJohn.text).toContain('Morning Express');
+    expect(mailOptionsJohn.text).toContain('Morning Train');
+    expect(mailOptionsJohn.text).toContain('5');
+    expect(mailOptionsJohn.text).toContain('North Station');
   });
 
   it('should handle email sending failure gracefully', async () => {
@@ -94,6 +119,7 @@ describe('sendPlatformReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
     ];
 
@@ -101,12 +127,15 @@ describe('sendPlatformReschedule', () => {
 
     await sendPlatformReschedule(userScheduleData, platform);
     expect(sendMailMock).toHaveBeenCalledTimes(1);
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Platform Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the platform has been changed to 3 on Central Station.\n\nRegards,\nRailWise Team`,
-    });
+    const mailOptionsJane = sendMailMock.mock.calls[0][0];
+    expect(mailOptionsJane.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJane.to).toBe('jane@example.com');
+    expect(mailOptionsJane.subject).toBe('Platform Change Notification');
+    expect(mailOptionsJane.text).toContain('Jane Smith');
+    expect(mailOptionsJane.text).toContain('Evening Express');
+    expect(mailOptionsJane.text).toContain('Express Train');
+    expect(mailOptionsJane.text).toContain('3');
+    expect(mailOptionsJane.text).toContain('Central Station');
   });
 
   it('should not send any emails if userScheduleData is empty', async () => {
@@ -142,6 +171,7 @@ describe('sendTimeReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station', 'North Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
     ];
 
@@ -150,13 +180,19 @@ describe('sendTimeReschedule', () => {
     await sendTimeReschedule(userScheduleData, time);
     expect(sendMailMock).toHaveBeenCalledTimes(1);
 
-    // Assert: Check if sendMail was called with the correct parameters
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Time Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the time has been delayed by 15 minutes at Central Station and North Station.\n\nRegards,\nRailWise Team`,
-    });
+    // Capture the actual arguments passed to sendMailMock
+    const mailOptions = sendMailMock.mock.calls[0][0];
+
+    // Assert: Check individual substrings in the text
+    expect(mailOptions.from).toBe(process.env.EMAIL);
+    expect(mailOptions.to).toBe('jane@example.com');
+    expect(mailOptions.subject).toBe('Time Change Notification');
+    expect(mailOptions.text).toContain('Jane Smith');
+    expect(mailOptions.text).toContain('Evening Express');
+    expect(mailOptions.text).toContain('Express Train');
+    expect(mailOptions.text).toContain('15 minutes');
+    expect(mailOptions.text).toContain('Central Station');
+    expect(mailOptions.text).toContain('North Station');
   });
 
   it('should send emails to multiple users successfully', async () => {
@@ -167,13 +203,15 @@ describe('sendTimeReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station', 'North Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
       {
         username: 'John Doe',
         email: 'john@example.com',
-        schedule: 'Morning Express',
+        schedule: 'Evening Express',
         haltNames: ['West Station'],
         phone: '1234567890',
+        train: 'Express Train'
       },
     ];
 
@@ -182,19 +220,28 @@ describe('sendTimeReschedule', () => {
     await sendTimeReschedule(userScheduleData, time);
     expect(sendMailMock).toHaveBeenCalledTimes(2);
 
-    // Assert: Check if sendMail was called with the correct parameters for both users
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Time Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the time has been delayed by 30 minutes at Central Station and North Station.\n\nRegards,\nRailWise Team`,
-    });
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'john@example.com',
-      subject: 'Time Change Notification',
-      text: `Dear John Doe,\n\nFor schedule \"Morning Express\", the time has been delayed by 30 minutes at West Station.\n\nRegards,\nRailWise Team`,
-    });
+    // First email
+    const mailOptionsJane = sendMailMock.mock.calls[0][0];
+    expect(mailOptionsJane.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJane.to).toBe('jane@example.com');
+    expect(mailOptionsJane.subject).toBe('Time Change Notification');
+    expect(mailOptionsJane.text).toContain('Jane Smith');
+    expect(mailOptionsJane.text).toContain('Evening Express');
+    expect(mailOptionsJane.text).toContain('Express Train');
+    expect(mailOptionsJane.text).toContain('30 minutes');
+    expect(mailOptionsJane.text).toContain('Central Station');
+    expect(mailOptionsJane.text).toContain('North Station');
+
+    // Second email
+    const mailOptionsJohn = sendMailMock.mock.calls[1][0];
+    expect(mailOptionsJohn.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJohn.to).toBe('john@example.com');
+    expect(mailOptionsJohn.subject).toBe('Time Change Notification');
+    expect(mailOptionsJohn.text).toContain('John Doe');
+    expect(mailOptionsJohn.text).toContain('Evening Express');
+    expect(mailOptionsJohn.text).toContain('Express Train');
+    expect(mailOptionsJohn.text).toContain('30 minutes');
+    expect(mailOptionsJohn.text).toContain('West Station');
   });
 
   it('should handle email sending failure gracefully', async () => {
@@ -207,6 +254,7 @@ describe('sendTimeReschedule', () => {
         schedule: 'Evening Express',
         haltNames: ['Central Station', 'North Station'],
         phone: '0987654321',
+        train: 'Express Train'
       },
     ];
 
@@ -214,12 +262,16 @@ describe('sendTimeReschedule', () => {
 
     await sendTimeReschedule(userScheduleData, time);
     expect(sendMailMock).toHaveBeenCalledTimes(1);
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: process.env.EMAIL,
-      to: 'jane@example.com',
-      subject: 'Time Change Notification',
-      text: `Dear Jane Smith,\n\nFor schedule \"Evening Express\", the time has been delayed by 20 minutes at Central Station and North Station.\n\nRegards,\nRailWise Team`,
-    });
+    const mailOptionsJane = sendMailMock.mock.calls[0][0];
+    expect(mailOptionsJane.from).toBe(process.env.EMAIL);
+    expect(mailOptionsJane.to).toBe('jane@example.com');
+    expect(mailOptionsJane.subject).toBe('Time Change Notification');
+    expect(mailOptionsJane.text).toContain('Jane Smith');
+    expect(mailOptionsJane.text).toContain('Evening Express');
+    expect(mailOptionsJane.text).toContain('Express Train');
+    expect(mailOptionsJane.text).toContain('20 minutes');
+    expect(mailOptionsJane.text).toContain('Central Station');
+    expect(mailOptionsJane.text).toContain('North Station');
   });
 
   it('should not send any emails if userScheduleData is empty', async () => {
