@@ -23,8 +23,8 @@ if (process.env.NODE_ENV !== "production") {
 // import { releaseExpiredHolds } from "./controllers/allControllers.js";
 const app = express();
 
-// const dbUrl = process.env.DB_URL;
-const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
+const dbUrl = process.env.DB_URL;
+// const dbUrl = "mongodb://127.0.0.1:27017/RailWise";
 
 mongoose
   .connect(dbUrl)
