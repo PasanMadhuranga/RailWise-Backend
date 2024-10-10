@@ -1,21 +1,18 @@
 {
-  "family": "railwiseTask",
+  "family": "railwiseBackendTask",
   "networkMode": "awsvpc",
-  "requiresCompatibilities": [
-    "FARGATE"
-  ],
-  "executionRoleArn": "arn:aws:iam::940482421209:role/railwiseExecutionRole",
-  "cpu": "256",               
-  "memory": "512",             
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "3072",
+  "executionRoleArn": "arn:aws:iam::940482421209:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "railwiseBackendContainer",
-      "image": "REPOSITORY_URI:IMAGE_TAG",
+      "image": "940482421209.dkr.ecr.eu-north-1.amazonaws.com/railwise-backend:latest",
       "essential": true,
       "portMappings": [
         {
           "containerPort": 3000,
-          "hostPort": 3000,
           "protocol": "tcp"
         }
       ]
