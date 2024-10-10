@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "nodemon ./index.js",
     "start": "node ./index.js",
-    "build": "esbuild index.js --bundle --platform=node --outdir=dist",
     "test": "vitest",
     "test:ui": "vitest --ui"
   },
