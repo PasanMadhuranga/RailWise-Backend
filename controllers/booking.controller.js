@@ -127,7 +127,7 @@ export const confirmBooking = async (req, res, next) => {
 
   const payment = await stripe.paymentIntents.create({
     amount: booking.totalFare * 100, // Amount in the smallest currency unit (e.g., 500 means $5.00)
-    currency: "usd",
+    currency: "lkr",
     description: `Train booking payment: ${booking._id}`,
     payment_method: id,
     confirm: true,
