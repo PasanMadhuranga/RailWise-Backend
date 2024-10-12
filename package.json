@@ -8,12 +8,14 @@
     "dev": "nodemon ./index.js",
     "start": "node ./index.js",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "performance-test": "artillery run performance-tests/artillery.yaml"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^9.0.3",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -34,6 +36,7 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4",
     "@vitest/ui": "^2.1.2",
+    "artillery": "^2.0.20",
     "babel-jest": "^29.7.0",
     "chai": "^5.1.1",
     "esbuild": "^0.24.0",

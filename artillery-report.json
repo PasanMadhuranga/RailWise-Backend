@@ -1,0 +1,171 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Fetch schedulesDetails": 600,
+      "vusers.created": 600,
+      "http.requests": 600,
+      "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 600,
+      "errors.ECONNREFUSED": 600,
+      "vusers.failed": 600
+    },
+    "rates": {
+      "http.request_rate": 10
+    },
+    "firstCounterAt": 1728735106606,
+    "lastCounterAt": 1728735166480,
+    "firstMetricAt": 1728735106606,
+    "lastMetricAt": 1728735166480,
+    "period": 1728735160000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 33,
+        "vusers.created": 33,
+        "http.requests": 33,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 33,
+        "errors.ECONNREFUSED": 33,
+        "vusers.failed": 33
+      },
+      "rates": {
+        "http.request_rate": 14
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735106606,
+      "lastCounterAt": 1728735109730,
+      "firstMetricAt": 1728735106606,
+      "lastMetricAt": 1728735109730,
+      "period": "1728735100000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 100,
+        "vusers.created": 100,
+        "http.requests": 100,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 100,
+        "errors.ECONNREFUSED": 100,
+        "vusers.failed": 100
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735110104,
+      "lastCounterAt": 1728735119730,
+      "firstMetricAt": 1728735110104,
+      "lastMetricAt": 1728735119730,
+      "period": "1728735110000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 100,
+        "vusers.created": 100,
+        "http.requests": 100,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 100,
+        "errors.ECONNREFUSED": 100,
+        "vusers.failed": 100
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735120104,
+      "lastCounterAt": 1728735129728,
+      "firstMetricAt": 1728735120104,
+      "lastMetricAt": 1728735129728,
+      "period": "1728735120000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 100,
+        "vusers.created": 100,
+        "http.requests": 100,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 100,
+        "errors.ECONNREFUSED": 100,
+        "vusers.failed": 100
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735130104,
+      "lastCounterAt": 1728735139729,
+      "firstMetricAt": 1728735130104,
+      "lastMetricAt": 1728735139729,
+      "period": "1728735130000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 100,
+        "vusers.created": 100,
+        "http.requests": 100,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 100,
+        "errors.ECONNREFUSED": 100,
+        "vusers.failed": 100
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735140104,
+      "lastCounterAt": 1728735149731,
+      "firstMetricAt": 1728735140104,
+      "lastMetricAt": 1728735149731,
+      "period": "1728735140000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 100,
+        "vusers.created": 100,
+        "http.requests": 100,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 100,
+        "errors.ECONNREFUSED": 100,
+        "vusers.failed": 100
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735150104,
+      "lastCounterAt": 1728735159729,
+      "firstMetricAt": 1728735150104,
+      "lastMetricAt": 1728735159729,
+      "period": "1728735150000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Fetch schedulesDetails": 67,
+        "vusers.created": 67,
+        "http.requests": 67,
+        "plugins.metrics-by-endpoint./api/admin/schedulesDetails.errors.ECONNREFUSED": 67,
+        "errors.ECONNREFUSED": 67,
+        "vusers.failed": 67
+      },
+      "rates": {
+        "http.request_rate": 10
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1728735160104,
+      "lastCounterAt": 1728735166480,
+      "firstMetricAt": 1728735160104,
+      "lastMetricAt": 1728735166480,
+      "period": "1728735160000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}

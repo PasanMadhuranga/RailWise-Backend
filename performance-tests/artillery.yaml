@@ -1,0 +1,15 @@
+# performance-tests/artillery.yaml
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 10  # 10 virtual users per second
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Fetch schedulesDetails"
+    flow:
+      - get:
+          url: "/api/admin/schedulesDetails"

@@ -1,0 +1,48 @@
+name: Performance Tests
+
+on:
+  workflow_dispatch:  # Manually trigger
+#   schedule:
+#     - cron: '0 3 * * *'  # Optional: Run daily at 3 AM
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'  
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Start Server in Dev Mode
+      run: npm run dev &
+      env:
+        NODE_ENV: test  # Set your environment (e.g., development, test)
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}  # Reference the secret securely
+        API_KEY: ${{ secrets.API_KEY }}  # Another example of a secret
+        DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}  # Example for database connection string
+
+    - name: Wait for Server to be Ready
+      run: |
+        npm install -g wait-on
+        wait-on http://localhost:3000/health
+      timeout-minutes: 2
+
+    - name: Run Artillery Performance Test
+      run: npm run performance-test
+      env:
+        CI: true
+
+    - name: Upload Artillery Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: artillery-report
+        path: ./artillery-report.json
