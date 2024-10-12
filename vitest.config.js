@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul', // or 'c8'
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/', './setupTests.js','/**/*.test.js'],
+      exclude: ['node_modules/', 'dist/', './setupTests.js'],	
     },
     mockReset: true,
   },
