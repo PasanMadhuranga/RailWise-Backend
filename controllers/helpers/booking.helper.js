@@ -4,9 +4,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import axios from "axios"; 
-
-
+import axios from "axios";
 
 export const getBookedSeatsofSchedule = async (
   scheduleId,
@@ -73,29 +71,35 @@ export const generateETickets = async (booking) => {
       bookingId: booking._id.toString(),
       seatId: seat._id.toString(),
     };
-    
-    const SECRET_KEY = process.env.QR_SECRET_KEY || 'your-secret-key';
-    const signature = crypto.createHmac('sha256', SECRET_KEY)
-                            .update(JSON.stringify(payload))
-                            .digest('hex');
-    
+
+    const SECRET_KEY = process.env.QR_SECRET_KEY || "your-secret-key";
+    const signature = crypto
+      .createHmac("sha256", SECRET_KEY)
+      .update(JSON.stringify(payload))
+      .digest("hex");
+
     const qrData = JSON.stringify({ ...payload, signature });
-    console.log('QR Data:', qrData);
-    
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${process.env.HOST}:3000/api/bookings/validateTicket/${encodeURIComponent(payload.bookingId)}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
-    
-    const qrCodeImage = await axios.get(qrUrl, { responseType: 'arraybuffer' }).then(response => response.data);
-    
+    console.log("QR Data:", qrData);
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=${
+      process.env.BACKEND_URL
+    }/api/bookings/validateTicket/${encodeURIComponent(
+      payload.bookingId
+    )}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
+
+    const qrCodeImage = await axios
+      .get(qrUrl, { responseType: "arraybuffer" })
+      .then((response) => response.data);
+
     const qrImage = await pdfDoc.embedPng(qrCodeImage);
     const qrImageDims = qrImage.scale(0.175);
-    
+
     firstPage.drawImage(qrImage, {
-      x: 461, 
+      x: 461,
       y: 30,
       width: qrImageDims.width,
       height: qrImageDims.height,
     });
-
 
     firstPage.drawText(`${booking.date.toISOString().split("T")[0]}`, {
       x: 70,
@@ -118,12 +122,15 @@ export const generateETickets = async (booking) => {
       color,
     });
 
-    firstPage.drawText(`${booking._id + seat.wagonRef.wagonNumber + seat.name}`, {
-      x: 68,
-      y: 137,
-      size: fontSize,
-      color,
-    });
+    firstPage.drawText(
+      `${booking._id + seat.wagonRef.wagonNumber + seat.name}`,
+      {
+        x: 68,
+        y: 137,
+        size: fontSize,
+        color,
+      }
+    );
 
     firstPage.drawText(`${booking.startHalt.departureTime}`, {
       x: 215,
@@ -216,7 +223,14 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
   await transporter.sendMail(mailOptions);
 };
 
-export const sendCancellationEmail = async (userEmail, userName, startHalt, endHalt, trainName, date) => {
+export const sendCancellationEmail = async (
+  userEmail,
+  userName,
+  startHalt,
+  endHalt,
+  trainName,
+  date
+) => {
   // Create a transporter
   let transporter = nodemailer.createTransport({
     service: "gmail", // or another email service

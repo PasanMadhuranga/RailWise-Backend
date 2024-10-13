@@ -64,18 +64,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Update this part to listen on your private IP
-const PORT = 3000;
-const HOST = process.env.HOST || "0.0.0.0";
-
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
+app.listen(3000, () => {
+  console.log(`Server listening on http://localhost:3000`);
 });
-
-app.listen(PORT, HOST, () => {
-  console.log(`Server listening on http://${HOST}:${PORT}`);
-});
-
-// app.listen(3000, () => {
-//   console.log(`Server listening on http://localhost:3000`);
-// });
