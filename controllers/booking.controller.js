@@ -78,7 +78,7 @@ export const confirmBooking = async (req, res, next) => {
   const { bookingId, email, id } = req.body;
   console.log("body: ", req.body);
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(`${process.env.STRIPE_SECRET_KEY}`);
   const booking = await Booking.findById(bookingId)
     .populate({
       path: "startHalt",
