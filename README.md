@@ -52,9 +52,16 @@ yarn install
 Create a `.env` file in the project root and add the following variables:
 
 ```bash
-MONGO_URI=<YOUR_MONGODB_CONNECTION_STRING>
-JWT_SECRET=<YOUR_JWT_SECRET>
-STRIPE_SECRET_KEY=<YOUR_STRIPE_SECRET_KEY>
+JWT_SECRET=<your_jwt_secret>
+DB_URL=<your_mongodb_url>
+EMAIL=<your_email>
+APP_PASSWORD=<your_email_app_password>
+CLIENT_URL=<your_frontend_url>
+STRIPE_SECRET_KEY=<your_stripe_secret_key>
+SMS_API_KEY=<your_sms_api_key>
+SMS_SENDER_ID=<your_sms_sender_id>
+SMS_USER_ID=<your_sms_user_id>
+BACKEND_URL=<your_backend_url>
 ```
 
 ### Running the Application
