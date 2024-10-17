@@ -18,7 +18,7 @@ router.post(
   "/createPendingBooking",
   validatePendingBooking,
   catchAsync(createPendingBooking)
-); // apply validatePendingBooking middleware before creating a pending booking
+);
 router.post("/confirmBooking", catchAsync(confirmBooking));
 
 router
@@ -26,6 +26,6 @@ router
   .get(catchAsync(getBookingDetails))
   .delete(verifyToken, catchAsync(cancelBooking));
 
-router.get('/validateTicket/:bookingId/:seatId/:signature', validateETicket);
+router.get("/validateTicket/:bookingId/:seatId/:signature", validateETicket);
 
 export default router;
