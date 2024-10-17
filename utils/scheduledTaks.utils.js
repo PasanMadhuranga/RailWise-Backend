@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import Booking from "../models/booking.model.js";
 
-// Schedule the task to run at midnight (00:00) every day
+// Schedule to delete expired bookings every day at midnight
 cron.schedule("0 0 * * *", async () => {
   try {
     const result = await Booking.deleteMany({ status: "expired" });

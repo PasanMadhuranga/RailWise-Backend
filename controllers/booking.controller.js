@@ -26,8 +26,6 @@ export const createPendingBooking = async (req, res, next) => {
     selectedClassId,
   } = req.body;
 
-  console.log("Pending booking request: ", req.body);
-
   // get fromHalt and toHalt
   const fromHalt = await Halt.findById(fromHaltId).select("price");
   const toHalt = await Halt.findById(toHaltId).select("price");
@@ -76,7 +74,6 @@ export const createPendingBooking = async (req, res, next) => {
 
 export const confirmBooking = async (req, res, next) => {
   const { bookingId, email, id } = req.body;
-  console.log("body: ", req.body);
 
   const stripe = new Stripe(`${process.env.STRIPE_SECRET_KEY}`);
   const booking = await Booking.findById(bookingId)
@@ -144,7 +141,6 @@ export const confirmBooking = async (req, res, next) => {
   booking.paymentId = payment.id;
   booking.status = "approved";
   booking.pendingTime = undefined;
-  console.log("Booking approved", booking);
   await booking.save();
 
   // Generate PDFs for each seat
@@ -158,7 +154,6 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
-  console.log("userId: ", req.userId);
   const booking = await Booking.findById(bookingId)
     .populate({
       path: "startHalt",

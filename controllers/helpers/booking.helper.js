@@ -80,7 +80,6 @@ export const generateETickets = async (booking) => {
                             .digest('hex');
     
     const qrData = JSON.stringify({ ...payload, signature });
-    console.log('QR Data:', qrData);
     
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${process.env.HOST}:3000/api/bookings/validateTicket/${encodeURIComponent(payload.bookingId)}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
     
@@ -185,7 +184,6 @@ export const generateETickets = async (booking) => {
     pdfBuffers.push(pdfBytes);
   }
 
-  console.log("PDFs generated");
   return pdfBuffers;
 };
 

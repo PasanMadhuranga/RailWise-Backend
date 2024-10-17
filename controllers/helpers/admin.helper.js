@@ -84,7 +84,6 @@ export const performAggregation = async (
     },
   ]);
 
-  console.log("aggregationResult: ", aggregationResult);
 
   const breakdownMap = new Map(
     aggregationResult.map((item) => [JSON.stringify(item._id), item.value])
