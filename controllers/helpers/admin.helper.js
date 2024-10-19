@@ -110,30 +110,29 @@ export const sendPlatformReschedule = async (
   userScheduleData,
   platform,
 ) => {
-  // Create a transporter
+
   let transporter = nodemailer.createTransport({
-    service: "gmail", // Specify the email service provider
+    service: "gmail", 
     auth: {
-      user: process.env.EMAIL, // Your email
-      pass: process.env.APP_PASSWORD, // Your app-specific password
+      user: process.env.EMAIL, 
+      pass: process.env.APP_PASSWORD, 
     },
   });
-  // Loop through each user data and send the notification
+
   for (let { username, email, schedule, phone, haltNames, train } of userScheduleData) {
-    // Email content
     const message = `Hello ${username},\n\nPlease note that for the schedule "${schedule}" of the train "${train}", the platform has been updated to ${platform} at the station ${haltNames[0]}.\n\nBest regards,\nRailWise Team`;
-    // const message = `For schedule "${schedule}", the platform has been changed to ${platform} on ${haltName}.`;
+
     let mailOptions = {
       from: process.env.EMAIL,
-      to: email, // Send to each user email
+      to: email,
       subject: "Platform Change Notification",
       text: message,
     };
     
     try {
-      // Send the email
+
       await transporter.sendMail(mailOptions);
-      // await sendRescheduleSMS("94" + phone, message);
+
       console.log(`Email and SMS sent to: ${email} for schedule: ${schedule}`);
     } catch (error) {
       console.error(
@@ -145,16 +144,15 @@ export const sendPlatformReschedule = async (
 };
 
 export const sendTimeReschedule = async (userScheduleData, time) => {
-  // Create a transporter
+
   let transporter = nodemailer.createTransport({
-    service: "gmail", // Specify the email service provider
+    service: "gmail", 
     auth: {
-      user: process.env.EMAIL, // Your email
-      pass: process.env.APP_PASSWORD, // Your app-specific password
+      user: process.env.EMAIL, 
+      pass: process.env.APP_PASSWORD, 
     },
   });
 
-  // Loop through each user data and send the notification
   for (let { username, email, schedule, haltNames, phone, train } of userScheduleData) {
     let message;
     if (haltNames.length === 1) {
@@ -162,19 +160,16 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
     } else {
       message = `Hello ${username},\n\nPlease be advised that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNames[0]}. This delay will affect all upcoming stations, including your destination at ${haltNames[1]}.\n\nBest regards,\nRailWise Team`;
     }
-    // Email content
     let mailOptions = {
       from: process.env.EMAIL,
-      to: email, // Send to each user email
+      to: email,
       subject: "Time Change Notification",
       text: message,
     };
 
     try {
-      // Send the email
       await transporter.sendMail(mailOptions);
       console.log(`Email sent to: ${email} for schedule: ${schedule}`);
-      // await sendRescheduleSMS("94" + phone, message);
     } catch (error) {
       console.error(
         `Failed to send email to: ${email} for schedule: ${schedule}`,
@@ -203,11 +198,11 @@ export const sendRescheduleSMS = async (phoneNumber, message) => {
 
 export const getDayRange = (date) => {
   const startOfDay = new Date(date);
-  // startOfDay.setDate(startOfDay.getDate() + 1);
+
   startOfDay.setUTCHours(0, 0, 0, 0);
 
   const endOfDay = new Date(date);
-  // endOfDay.setDate(endOfDay.getDate() + 1);
+
   endOfDay.setUTCHours(23, 59, 59, 999);
 
   return { startOfDay, endOfDay };
@@ -223,7 +218,7 @@ export const getAffectedHalts = async (notifyAll, { scheduleId, haltOrderNumber,
       throw new Error("scheduleId and haltOrderNumber are required when notifyAll is true.");
     }
     
-    // Find all halts when notifyAll is true
+
     affectedHalts = await Halt.find({
       scheduleRef: scheduleId,
       haltOrder: { $gte: haltOrderNumber },
@@ -235,16 +230,16 @@ export const getAffectedHalts = async (notifyAll, { scheduleId, haltOrderNumber,
       throw new Error("haltId is required when notifyAll is false.");
     }
     
-    // Find a single halt by its haltId when notifyAll is false
+
     const affectedHalt = await Halt.findById(haltId).populate("stationRef", "name");
 
-    // Convert the single halt to an array to keep the result consistent
+
     if (affectedHalt) {
       affectedHalts.push(affectedHalt);
     }
   }
 
-  // Create a map from haltId to station name
+
   const haltIdToNameMap = affectedHalts.reduce((map, halt) => {
     map[halt._id] = halt.stationRef.name;
     return map;

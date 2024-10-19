@@ -43,8 +43,8 @@ const populateGaluHalts = async () => {
   try{
   const train = await Train.findOne({ name: "Galu Kumari" });
   const relevantSchedules = await Schedule.find({ trainRef: train._id })
-  const schedule = relevantSchedules[0]; // Replace with the correct schedule index
-  let price = 0; // Starting fare price
+  const schedule = relevantSchedules[0]; 
+  let price = 0; 
 
   for (let i = 0; i < stationsData.length; i++) {
     const stationData = stationsData[i];
@@ -64,7 +64,7 @@ const populateGaluHalts = async () => {
       platform: Math.floor(Math.random() * 5) + 1,
       price: price,
     });
-    price += Math.floor(Math.random() * (50 - 10 + 1)) + 10; // increment price by add a random value between between 10 and 50
+    price += Math.floor(Math.random() * (50 - 10 + 1)) + 10;
     await halt.save();
   }
   console.log("Galu Kumari halts successfully populated");

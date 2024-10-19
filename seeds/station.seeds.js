@@ -1,7 +1,6 @@
 import Station from "../models/station.model.js";
 
 
-// List of Sri Lanka station names
 const stationNames = [
   "Beliaththa",
   "Wewurukannala",
@@ -75,23 +74,18 @@ const stationNames = [
 ];
 
 
-
-// Function to create station data
 const populateStations = async () => {
   try {
-    // Check if stations already exist
     const existingStations = await Station.find({});
     if (existingStations.length > 0) {
       console.log("Stations already populated");
       return;
     }
 
-    // Create station instances
     const stations = stationNames.map((name) => ({
         name,
         }));
 
-    // Insert station data into the database
     await Station.insertMany(stations);
 
     console.log("Stations successfully populated");

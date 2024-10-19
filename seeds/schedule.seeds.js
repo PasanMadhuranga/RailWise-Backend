@@ -16,20 +16,16 @@ const returnNmaes = [
   "Maradana - Matara",
 ]
 
-// Function to create schedule data
 const populateSchedules = async () => {
   try {
-    // Get the train data
     const trains = await Train.find({});
 
-    // Check if schedules already exist
     const existingSchedules = await Schedule.find({});
     if (existingSchedules.length > 0) {
       console.log("Schedules already populated");
       return;
     }
 
-    // Create schedule instances
     const schedules = [];
     const scheduleDays = [
       {
@@ -80,7 +76,6 @@ const populateSchedules = async () => {
         });
     }
 
-    // Insert schedule data into the database
     await Schedule.insertMany(schedules);
 
     console.log("Schedules successfully populated");

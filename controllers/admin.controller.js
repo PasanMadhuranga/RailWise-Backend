@@ -27,17 +27,15 @@ export const getBookingsCount = async (req, res, next) => {
 
   const { periods, groupBy } = generatePeriods(timeFrame);
 
-  // Prepare the match stage for aggregation
-  let matchStage = { status }; // Default match stage with confirmed bookings
+  let matchStage = { status };
   if (scheduleId !== "all") {
-    // Validate scheduleId if it's not 'all'
+
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       return new ExpressError("Invalid schedule ID", 400);
     }
     matchStage = { scheduleRef: new mongoose.Types.ObjectId(scheduleId) };
   }
 
-  // Perform aggregation to get the booking count for each period
   const result = await performAggregation(
     Booking,
     matchStage,
@@ -48,7 +46,6 @@ export const getBookingsCount = async (req, res, next) => {
     "count"
   );
 
-  // Return the result
   res
     .status(200)
     .json({ success: true, scheduleId, timeFrame, bookingsBreakdown: result });
@@ -59,17 +56,15 @@ export const getTotalFare = async (req, res, next) => {
 
   const { periods, groupBy } = generatePeriods(timeFrame);
 
-  // Prepare the match stage for aggregation
-  let matchStage = { status: "approved" }; // Default match stage with confirmed bookings
+  let matchStage = { status: "approved" };
   if (scheduleId !== "all") {
-    // Validate scheduleId if it's not 'all'
+
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       return next(new ExpressError("Invalid schedule ID", 400));
     }
     matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
   }
 
-  // Perform aggregation to get the total fare for each period
   const result = await performAggregation(
     Booking,
     matchStage,
@@ -91,7 +86,6 @@ export const getUserRegistrations = async (req, res, next) => {
   let groupBy;
   let periods = [];
 
-  // Determine the grouping and periods based on the timeFrame
   switch (timeFrame) {
     case "yearly":
       groupBy = { year: { $year: { $toDate: "$_id" } } };
@@ -132,7 +126,6 @@ export const getUserRegistrations = async (req, res, next) => {
       return next(new ExpressError("Invalid time frame", 400));
   }
 
-  // Perform aggregation to get the user registration count for each period
   const registrationBreakdown = await User.aggregate([
     {
       $group: {
@@ -145,12 +138,10 @@ export const getUserRegistrations = async (req, res, next) => {
     },
   ]);
 
-  // Create a map from the aggregated results
   const breakdownMap = new Map(
     registrationBreakdown.map((item) => [JSON.stringify(item._id), item.count])
   );
 
-  // Generate the final result array including periods with zero registrations
   const result = periods.map((period) => {
     let periodLabel;
     if (timeFrame === "yearly") {
@@ -180,7 +171,6 @@ export const getUserRegistrations = async (req, res, next) => {
     };
   });
 
-  // Return the result
   res
     .status(200)
     .json({ success: true, timeFrame, registrationBreakdown: result });
@@ -200,7 +190,6 @@ export const getBookingClassDistribution = async (req, res, next) => {
       matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
     }
 
-    // Perform aggregation to get booking class distribution for each period
     const classDistribution = await Booking.aggregate([
       {
         $match: matchStage,
@@ -246,12 +235,10 @@ export const getBookingClassDistribution = async (req, res, next) => {
       },
     ]);
 
-    // Create a map from the aggregated results
     const breakdownMap = new Map(
       classDistribution.map((item) => [JSON.stringify(item._id), item.count])
     );
 
-    // Generate the final result array including periods with zero bookings
     const result = periods.map((period) => {
       let periodLabel;
       if (timeFrame === "yearly") {
@@ -262,7 +249,6 @@ export const getBookingClassDistribution = async (req, res, next) => {
         periodLabel = `${period.year % 100}/w${period.week}`;
       }
 
-      // For each period, return the counts for each class
       return {
         period: periodLabel,
         first:
@@ -278,7 +264,6 @@ export const getBookingClassDistribution = async (req, res, next) => {
       };
     });
 
-    // Return the result
     res.status(200).json({
       success: true,
       scheduleId,
@@ -295,7 +280,6 @@ export const getBookingsDetails = async (req, res, next) => {
   const startIndex = parseInt(req.query.startIndex) || 0;
   const matchStage = {};
 
-  // Validate and set scheduleRef if a specific scheduleId is provided
   if (scheduleId !== "all") {
     if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
       return next(new ExpressError("Invalid schedule ID", 400));
@@ -303,15 +287,12 @@ export const getBookingsDetails = async (req, res, next) => {
     matchStage.scheduleRef = new mongoose.Types.ObjectId(scheduleId);
   }
 
-  // Set status if a specific status is provided
   if (status !== "all") {
     matchStage.status = status;
   }
 
-  // Count the total number of bookings matching the criteria
   const totalBookingsCount = await Booking.countDocuments(matchStage);
 
-  // Retrieve the booking details with pagination
   const bookingsDetails = await Booking.find(matchStage)
     .populate({
       path: "scheduleRef",
@@ -343,7 +324,6 @@ export const getBookingsDetails = async (req, res, next) => {
     .limit(50)
     .skip(startIndex);
 
-  // Send the response with both the booking details and total count
   res.status(200).json({ totalBookingsCount, bookingsDetails });
 };
 
@@ -441,7 +421,6 @@ export const timeChange = async (req, res, next) => {
     const relevantBookings = await getRelevantBookings(affectedHaltIds, startOfDay, endOfDay);
     const userScheduleData = buildUserScheduleData(relevantBookings, haltIdToNameMap, affectedHaltIds);
 
-    // Send reschedule email
     await sendTimeReschedule(userScheduleData, time);
     res.status(200).json({ message: "Passengers have been notified successfully." });
   } catch (error) {

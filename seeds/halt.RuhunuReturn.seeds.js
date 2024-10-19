@@ -19,10 +19,10 @@ const stationsData = [
 
 const populateRuhunuReturnHalts = async () => {
   try {
-    const train = await Train.findOne({ name: "Ruhunu Kumari" }); // Replace with your train name
+    const train = await Train.findOne({ name: "Ruhunu Kumari" }); 
     const relevantSchedules = await Schedule.find({ trainRef: train._id });
-    const schedule = relevantSchedules[1]; // Modified as requested
-    let price = 0; // Starting fare price
+    const schedule = relevantSchedules[1]; 
+    let price = 0; 
 
     for (let i = 0; i < stationsData.length; i++) {
       const stationData = stationsData[i];

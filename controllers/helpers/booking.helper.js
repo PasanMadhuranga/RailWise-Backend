@@ -19,7 +19,7 @@ export const getBookedSeatsofSchedule = async (
       $gte: new Date(date),
       $lt: new Date(date).setDate(new Date(date).getDate() + 1),
     },
-    status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
+    status: { $ne: "cancelled" }, // exclude the cancelled bookings.
   })
     .populate({
       path: "startHalt",
@@ -195,21 +195,21 @@ export const generateETickets = async (booking) => {
 };
 
 export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
-  // Create a transporter
+
   let transporter = nodemailer.createTransport({
-    service: "gmail", // or another email service
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.APP_PASSWORD,
     },
   });
 
+  // read the email template from the file
   let htmlContent = fs.readFileSync(
     "./controllers/helpers/email_templates/bookingConfirmationEmail.html",
     "utf8"
   );
 
-  // Email content
   let mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
@@ -222,7 +222,6 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
     })),
   };
 
-  // Send the email
   await transporter.sendMail(mailOptions);
 };
 
@@ -234,9 +233,8 @@ export const sendCancellationEmail = async (
   trainName,
   date
 ) => {
-  // Create a transporter
   let transporter = nodemailer.createTransport({
-    service: "gmail", // or another email service
+    service: "gmail", 
     auth: {
       user: process.env.EMAIL,
       pass: process.env.APP_PASSWORD,
@@ -248,14 +246,15 @@ export const sendCancellationEmail = async (
     "utf-8"
   );
 
+  // replace placeholders in the email template with actual values
   htmlContent = htmlContent
     .replace("{{userName}}", userName)
     .replace("{{trainName}}", trainName)
     .replace("{{date}}", date.toISOString().split("T")[0])
     .replace("{{startHalt}}", startHalt)
     .replace("{{endHalt}}", endHalt);
-  // Email content
-  let mailOptions = {
+
+    let mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Booking Cancelled",

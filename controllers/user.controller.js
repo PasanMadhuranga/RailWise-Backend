@@ -121,10 +121,9 @@ export const forgotPassword = async (req, res, next) => {
   }
   const resetToken = crypto.randomBytes(32).toString("hex");
   user.resetToken = resetToken;
-  user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+  user.resetTokenExpiry = Date.now() + 3600000;
   await user.save();
 
-  // Send email with reset token
   await sendForgotPassEmail(email, resetToken);
 
   res.status(200).json({ message: "Email sent" });

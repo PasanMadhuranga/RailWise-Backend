@@ -38,7 +38,6 @@ async function populateUsersAndCardDetails() {
         for (const user of users) {
             const newUser = new User({ ...user, password: user.password });
             await newUser.save();
-            // console.log(`User ${user.username} saved successfully.`);
         }
         console.log("Users successfully populated");
     } catch (error) {

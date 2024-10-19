@@ -10,28 +10,20 @@ import ExpressError from "../utils/ExpressError.utils.js";
 
 import { getTotalSeatsofEachClass, getBookedSeatsofEachClass } from "./helpers/schedule.helper.js";
 
-// get all the schedules that run on the given date and have the given from and to stations
 export const getSchedules = async (req, res, next) => {
-  // get the fromName, toName and date that user has entered in the search bar
   const { fromStationId, toStationId, date } = req.query;
 
-  // Find the station with the given fromName
   const fromStation = await Station.findById(fromStationId);
-  // Find the station with the given toName
   const toStation = await Station.findById(toStationId);
 
-  // If the fromStation or toStation is not found, throw an error
   if (!fromStation || !toStation) {
     throw new ExpressError("Invalid Station Name", 400);
   }
 
-  // Create a Date object
   const dateObj = new Date(date);
 
-  // Get the day of the week as a number (0-6)
   const dayOfWeekNumber = dateObj.getDay();
 
-  // Array of day names
   const daysOfWeek = [
     "sunday",
     "monday",
@@ -42,11 +34,8 @@ export const getSchedules = async (req, res, next) => {
     "saturday",
   ];
 
-  // Get the day name
   const dayName = daysOfWeek[dayOfWeekNumber];
 
-  // Find all schedules that run on the given date
-  // populate only the name field of the trainRef field
   const dateSchedules = await Schedule.find({ [dayName]: true })
     .populate({
       path: "trainRef",
@@ -55,25 +44,21 @@ export const getSchedules = async (req, res, next) => {
     .select("-monday -tuesday -wednesday -thursday -friday -saturday -sunday"); // Select all fields except the days of the week
 
   const finalSchedules = [];
-  // from all the schedules, filter out the schedules that have the fromStation before the toStation
   for (let schedule of dateSchedules) {
-    // from all schedules filter the schedules that have both fromStation and toStation as stops
     const fromHalt = await Halt.findOne({
       stationRef: fromStation._id,
       scheduleRef: schedule._id,
-    }).populate("stationRef"); // Populate the stationRef field with the station details
+    }).populate("stationRef"); 
     const toHalt = await Halt.findOne({
       stationRef: toStation._id,
       scheduleRef: schedule._id,
-    }).populate("stationRef"); // Populate the stationRef field with the station details
+    }).populate("stationRef"); 
 
-    // if the startHalt is before the endHalt, add the schedule to the finalSchedules array
     if (fromHalt && toHalt && fromHalt.haltOrder < toHalt.haltOrder) {
       finalSchedules.push({ schedule, fromHalt, toHalt });
     }
   }
 
-  // for each schedule in the finalSchedules array, get the number of booked seats of each class
   for (let i = 0; i < finalSchedules.length; i++) {
     const { schedule, fromHalt, toHalt } = finalSchedules[i];
     const totalSeatsCount = await getTotalSeatsofEachClass(schedule.trainRef);
@@ -91,10 +76,9 @@ export const getSchedules = async (req, res, next) => {
       totalSeatsCount.thirdClass - bookedSeatsCount.thirdClass;
   }
 
-  return res.status(200).json(finalSchedules); // Send the finalSchedules array as the response
+  return res.status(200).json(finalSchedules); 
 };
 
-// get the number of seats of each class of the given train
 export const getDetailsOfSchedule = async (req, res, next) => {
   const { scheduleId, fromHaltId, toHaltId, date } = req.query;
   const fromHalt = await Halt.findById(fromHaltId).populate("stationRef");
@@ -143,7 +127,6 @@ export const getDetailsOfSchedule = async (req, res, next) => {
   });
 };
 
-// get the details of the wagons of the requested class of the train
 export const getWagonsOfClass = async (req, res, next) => {
   const {
     trainId,
@@ -154,8 +137,7 @@ export const getWagonsOfClass = async (req, res, next) => {
     requestedClassId,
   } = req.query;
 
-  // get the train with the given trainId
-  // populate the wagons field and the wagonClassRef field of each wagon
+
   const train = await Train.findById(trainId)
     .populate({
       path: "wagons",
@@ -166,7 +148,6 @@ export const getWagonsOfClass = async (req, res, next) => {
     .lean(); // Use lean() to get plain JavaScript objects instead of Mongoose documents
 
 
-  // from all the wagons in the train, filter out the wagons that have the requested coach type
   const requestedClassWagons = [];
   train.wagons.forEach((wagon) => {
     if (wagon.wagonClassRef.equals(requestedClassId)) {
@@ -174,22 +155,18 @@ export const getWagonsOfClass = async (req, res, next) => {
     }
   });
 
-  // get all the bookings of that schedule on that date
   const AllbookingsOnDate = await Booking.find({
     scheduleRef: scheduleId,
     date: {
       $gte: new Date(date),
       $lt: new Date(date).setDate(new Date(date).getDate() + 1),
     },
-    status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
+    status: { $ne: "cancelled" },
   }).populate("startHalt endHalt seats");
 
-  // get the from halt and to halt details
   const fromHalt = await Halt.findById(fromHaltId);
   const toHalt = await Halt.findById(toHaltId);
 
-  // filter out the bookings that have a to stop number greater than the from stop number.
-  // that is, the bookings that are relevant to the journey from the from stop to the to stop
   let relevantBookingsOnDate = [];
   AllbookingsOnDate.forEach((booking) => {
     if (
@@ -204,12 +181,10 @@ export const getWagonsOfClass = async (req, res, next) => {
     }
   });
 
-  // from all the relevant bookings, get all the booked seats
   const relevantBookedSeats = relevantBookingsOnDate
     .map((booking) => booking.seats)
     .flat();
 
-  // for each coach, filter out the booked seats that belong to that coach
   for (let i = 0; i < requestedClassWagons.length; i++) {
     const allSeatsofCurrWagon = requestedClassWagons[i].seats.map((seat) =>
       seat._id.toString()
@@ -217,7 +192,6 @@ export const getWagonsOfClass = async (req, res, next) => {
     const bookedSeatsofCurrWagon = relevantBookedSeats.filter((seat) =>
       allSeatsofCurrWagon.includes(seat._id.toString())
     );
-    // add the booked seats to the coach object
     requestedClassWagons[i].alreadyBookedSeats = bookedSeatsofCurrWagon.map((seat) => seat._id);
   }
 
@@ -227,7 +201,6 @@ export const getWagonsOfClass = async (req, res, next) => {
 };
 
 
-// get popular routes
 export const getPopularRoutes = async (req, res, next) => {
   const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

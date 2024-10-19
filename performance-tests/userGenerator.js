@@ -1,4 +1,3 @@
-// performance-tests/userGenerator.js (CommonJS)
 const { faker } = require('@faker-js/faker');
 
 function generateUser() {

@@ -11,7 +11,7 @@ export const verifyToken = (req, res, next) => {
     if (err) {
       throw new ExpressError("Unauthorized", 401);
     }
-    req.userId = decoded.id; // decoded is the payload that is provided when creating the token, in this case, the user id
+    req.userId = decoded.id;
     next();
   });
 };
@@ -25,13 +25,11 @@ export const verifyAdminToken = (req, res, next) => {
     if (err) {
       throw new ExpressError("Unauthorized", 401);
     }
-    req.adminId = decoded.id; // decoded is the payload that is provided when creating the token, in this case, the admin id
+    req.adminId = decoded.id;
     next();
   });
 };
 
-
-// to validate pendingBooking
 export const validatePendingBooking = (req,res,next) => {
   const {error} = pendingSchema.validate(req.body);
   if(error){
@@ -40,7 +38,6 @@ export const validatePendingBooking = (req,res,next) => {
   next();
 }
 
-// to validate user registration
 export const validateUserRegistration = (req,res,next) => {
   const {error} = userRegistrationSchema.validate(req.body);
   if(error){

@@ -5,18 +5,14 @@ import Train from '../models/train.model.js';
 import Booking from '../models/booking.model.js';
 
 
-// Function to create booking data
 const populateBookings = async () => {
   try {
-    // Get the user data
     const users = await User.find({});
     const schedules = await Schedule.find({});
 
     for (let i = 0; i < 500; i++) {
-        // Randomly select a user
         const user = users[Math.floor(Math.random() * users.length)];
     
-        // Randomly select a schedule
         const schedule = schedules[Math.floor(Math.random() * schedules.length)];
         const train = await Train.findById(schedule.trainRef).populate("wagons")
         const randomWagon = train.wagons[Math.floor(Math.random() * train.wagons.length)];
@@ -28,13 +24,11 @@ const populateBookings = async () => {
             }
             return seats;
         };
-        // Get all stops for the schedule
+
         const halts = await Halt.find({ scheduleRef: schedule._id });
 
-        // Randomly select a start stop
         const halt1 = halts[Math.floor(Math.random() * halts.length)];
 
-        // Randomly select an end stop
         const halt2 = halts[Math.floor(Math.random() * halts.length)];
 
         let startHalt;
@@ -48,12 +42,10 @@ const populateBookings = async () => {
             endHalt = halt1;
         }
 
-        // Get the start and end dates for the schedule
         const startDate = new Date("2023-01-01");
         const endDate = new Date("2024-12-31");
         const status = ['approved', 'cancelled'];
 
-        // Create booking instances
         await Booking.create({
             userRef: user._id,
             scheduleRef: schedule._id,

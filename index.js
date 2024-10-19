@@ -10,9 +10,6 @@ import adminRoutes from "./routes/admin.route.js";
 
 import { releaseExpiredPendingBookings } from "./controllers/helpers/booking.helper.js";
 
-// // Import middleware functions
-//  import { verifyToken, verifyAdminToken, validatePendingBooking, validateUserRegistration } from "./utils/middleware.js";
-
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -20,7 +17,6 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
 
-// import { releaseExpiredHolds } from "./controllers/allControllers.js";
 const app = express();
 
 const dbUrl = process.env.DB_URL;
@@ -50,13 +46,12 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Periodic task to release expired booking holds
-setInterval(releaseExpiredPendingBookings, 60 * 1000); // Run every minute
+setInterval(releaseExpiredPendingBookings, 60 * 1000);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
-  //in ES6 if var and key are the same, you can just write the key
+
   return res.status(statusCode).json({
     success: false,
     statusCode,
@@ -64,7 +59,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Update this part to listen on your private IP
 const PORT = 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 
