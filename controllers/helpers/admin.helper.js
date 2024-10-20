@@ -84,7 +84,6 @@ export const performAggregation = async (
     },
   ]);
 
-
   const breakdownMap = new Map(
     aggregationResult.map((item) => [JSON.stringify(item._id), item.value])
   );
@@ -105,21 +104,23 @@ export const performAggregation = async (
   });
 };
 
-
-export const sendPlatformReschedule = async (
-  userScheduleData,
-  platform,
-) => {
-
+export const sendPlatformReschedule = async (userScheduleData, platform) => {
   let transporter = nodemailer.createTransport({
-    service: "gmail", 
+    service: "gmail",
     auth: {
-      user: process.env.EMAIL, 
-      pass: process.env.APP_PASSWORD, 
+      user: process.env.EMAIL,
+      pass: process.env.APP_PASSWORD,
     },
   });
 
-  for (let { username, email, schedule, phone, haltNames, train } of userScheduleData) {
+  for (let {
+    username,
+    email,
+    schedule,
+    phone,
+    haltNames,
+    train,
+  } of userScheduleData) {
     const message = `Hello ${username},\n\nPlease note that for the schedule "${schedule}" of the train "${train}", the platform has been updated to ${platform} at the station ${haltNames[0]}.\n\nBest regards,\nRailWise Team`;
 
     let mailOptions = {
@@ -128,11 +129,10 @@ export const sendPlatformReschedule = async (
       subject: "Platform Change Notification",
       text: message,
     };
-    
+
     try {
-
       await transporter.sendMail(mailOptions);
-
+      await sendRescheduleSMS("94" + phone, message);
       console.log(`Email and SMS sent to: ${email} for schedule: ${schedule}`);
     } catch (error) {
       console.error(
@@ -144,16 +144,22 @@ export const sendPlatformReschedule = async (
 };
 
 export const sendTimeReschedule = async (userScheduleData, time) => {
-
   let transporter = nodemailer.createTransport({
-    service: "gmail", 
+    service: "gmail",
     auth: {
-      user: process.env.EMAIL, 
-      pass: process.env.APP_PASSWORD, 
+      user: process.env.EMAIL,
+      pass: process.env.APP_PASSWORD,
     },
   });
 
-  for (let { username, email, schedule, haltNames, phone, train } of userScheduleData) {
+  for (let {
+    username,
+    email,
+    schedule,
+    haltNames,
+    phone,
+    train,
+  } of userScheduleData) {
     let message;
     if (haltNames.length === 1) {
       message = `Hello ${username},\n\nPlease be informed that the schedule "${schedule}" of train "${train}" has been delayed by ${time} minutes at ${haltNames[0]}. However, this delay will not affect all subsequent stations.\n\nBest regards,\nRailWise Team`;
@@ -169,6 +175,7 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
 
     try {
       await transporter.sendMail(mailOptions);
+      await sendRescheduleSMS("94" + phone, message);
       console.log(`Email sent to: ${email} for schedule: ${schedule}`);
     } catch (error) {
       console.error(
@@ -180,7 +187,6 @@ export const sendTimeReschedule = async (userScheduleData, time) => {
 };
 
 export const sendRescheduleSMS = async (phoneNumber, message) => {
-
   const response = await axios.post("https://app.notify.lk/api/v1/send", {
     user_id: process.env.SMS_USER_ID,
     api_key: process.env.SMS_API_KEY,
@@ -188,7 +194,7 @@ export const sendRescheduleSMS = async (phoneNumber, message) => {
     to: phoneNumber,
     message: message,
   });
-  
+
   if (response.status === 200) {
     console.log(`SMS sent to: ${phoneNumber}`);
   } else {
@@ -208,16 +214,18 @@ export const getDayRange = (date) => {
   return { startOfDay, endOfDay };
 };
 
-
-
-export const getAffectedHalts = async (notifyAll, { scheduleId, haltOrderNumber, haltId }) => {
+export const getAffectedHalts = async (
+  notifyAll,
+  { scheduleId, haltOrderNumber, haltId }
+) => {
   let affectedHalts = [];
 
   if (notifyAll) {
     if (!scheduleId || !haltOrderNumber) {
-      throw new Error("scheduleId and haltOrderNumber are required when notifyAll is true.");
+      throw new Error(
+        "scheduleId and haltOrderNumber are required when notifyAll is true."
+      );
     }
-    
 
     affectedHalts = await Halt.find({
       scheduleRef: scheduleId,
@@ -229,28 +237,32 @@ export const getAffectedHalts = async (notifyAll, { scheduleId, haltOrderNumber,
     if (!haltId) {
       throw new Error("haltId is required when notifyAll is false.");
     }
-    
 
-    const affectedHalt = await Halt.findById(haltId).populate("stationRef", "name");
-
+    const affectedHalt = await Halt.findById(haltId).populate(
+      "stationRef",
+      "name"
+    );
 
     if (affectedHalt) {
       affectedHalts.push(affectedHalt);
     }
   }
 
-
   const haltIdToNameMap = affectedHalts.reduce((map, halt) => {
     map[halt._id] = halt.stationRef.name;
     return map;
   }, {});
 
-  const affectedHaltIds = affectedHalts.map(halt => halt._id.toString());
+  const affectedHaltIds = affectedHalts.map((halt) => halt._id.toString());
 
   return { affectedHaltIds, haltIdToNameMap };
 };
 
-export const getRelevantBookings = async (affectedHaltIds, startOfDay, endOfDay) => {
+export const getRelevantBookings = async (
+  affectedHaltIds,
+  startOfDay,
+  endOfDay
+) => {
   return Booking.find({
     $and: [
       {
@@ -268,15 +280,17 @@ export const getRelevantBookings = async (affectedHaltIds, startOfDay, endOfDay)
     ],
   })
     .populate("userRef", "email phone username")
-    .populate(
-      {
-        path: "scheduleRef",
-        select: "name",
-      }
-    );
+    .populate({
+      path: "scheduleRef",
+      select: "name",
+    });
 };
 
-export const buildUserScheduleData = (bookings, haltIdToNameMap, affectedHaltIds) => {
+export const buildUserScheduleData = (
+  bookings,
+  haltIdToNameMap,
+  affectedHaltIds
+) => {
   return bookings.map((booking) => {
     const userHaltNames = [];
     if (affectedHaltIds.includes(booking.startHalt.toString())) {
