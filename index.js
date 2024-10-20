@@ -52,6 +52,10 @@ app.use("/api/admin", adminRoutes);
 
 setInterval(releaseExpiredPendingBookings, 60 * 1000);
 
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
