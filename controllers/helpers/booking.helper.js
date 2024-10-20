@@ -80,9 +80,9 @@ export const generateETickets = async (booking) => {
 
     const qrData = JSON.stringify({ ...payload, signature });
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${
-      process.env.HOST
-    }:3000/api/bookings/validateTicket/${encodeURIComponent(
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=${
+      process.env.BACKEND_URL
+    }/api/bookings/validateTicket/${encodeURIComponent(
       payload.bookingId
     )}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
 
