@@ -18,14 +18,18 @@ export const register = async (req, res, next) => {
       username,
       email,
       phone,
-      password
+      password,
     });
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
 
     const { password: hashed, ...restOfUser } = newUser._doc;
     res
-      .cookie("access_token", token, { httpOnly: true })
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
       .status(200)
       .json(restOfUser);
   } catch (error) {
@@ -53,7 +57,11 @@ export const login = async (req, res, next) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
   const { password: hashed, ...restOfUser } = user._doc;
   res
-    .cookie("access_token", token, { httpOnly: true })
+    .cookie("access_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+    })
     .status(200)
     .json(restOfUser);
 };

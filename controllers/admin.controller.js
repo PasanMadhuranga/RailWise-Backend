@@ -349,7 +349,10 @@ export const getSchedulesDetails = async (req, res, next) => {
 };
 
 export const getSchedules = async (req, res, next) => {
-  const schedules = await Schedule.find().select("name trainRef").populate("trainRef", "name").sort({ name: 1 });
+  const schedules = await Schedule.find()
+    .select("name trainRef")
+    .populate("trainRef", "name")
+    .sort({ name: 1 });
   res.status(200).json({ schedules });
 };
 
@@ -371,7 +374,11 @@ export const login = async (req, res, next) => {
   const { password: hashed, ...restOfAdmin } = admin._doc;
 
   res
-    .cookie("access_token", token, { httpOnly: true })
+    .cookie("access_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+    })
     .status(200)
     .json(restOfAdmin);
 };
@@ -397,8 +404,16 @@ export const changePlatform = async (req, res, next) => {
 
   try {
     const { startOfDay, endOfDay } = getDayRange(date);
-    const relevantBookings = await getRelevantBookings([haltId], startOfDay, endOfDay);
-    const userScheduleData = buildUserScheduleData(relevantBookings, {[haltId]:haltName}, [haltId]);
+    const relevantBookings = await getRelevantBookings(
+      [haltId],
+      startOfDay,
+      endOfDay
+    );
+    const userScheduleData = buildUserScheduleData(
+      relevantBookings,
+      { [haltId]: haltName },
+      [haltId]
+    );
     await sendPlatformReschedule(userScheduleData, platform);
     res
       .status(200)
@@ -409,7 +424,6 @@ export const changePlatform = async (req, res, next) => {
   }
 };
 
-
 export const timeChange = async (req, res, next) => {
   const { scheduleId, haltOrder, haltId, date, time, notifyAll } = req.body;
 
@@ -417,12 +431,29 @@ export const timeChange = async (req, res, next) => {
     const { startOfDay, endOfDay } = getDayRange(date);
     const haltOrderNumber = Number(haltOrder);
 
-    const { affectedHaltIds, haltIdToNameMap } = await getAffectedHalts(notifyAll, { scheduleId: scheduleId, haltOrderNumber: haltOrderNumber, haltId:haltId });
-    const relevantBookings = await getRelevantBookings(affectedHaltIds, startOfDay, endOfDay);
-    const userScheduleData = buildUserScheduleData(relevantBookings, haltIdToNameMap, affectedHaltIds);
+    const { affectedHaltIds, haltIdToNameMap } = await getAffectedHalts(
+      notifyAll,
+      {
+        scheduleId: scheduleId,
+        haltOrderNumber: haltOrderNumber,
+        haltId: haltId,
+      }
+    );
+    const relevantBookings = await getRelevantBookings(
+      affectedHaltIds,
+      startOfDay,
+      endOfDay
+    );
+    const userScheduleData = buildUserScheduleData(
+      relevantBookings,
+      haltIdToNameMap,
+      affectedHaltIds
+    );
 
     await sendTimeReschedule(userScheduleData, time);
-    res.status(200).json({ message: "Passengers have been notified successfully." });
+    res
+      .status(200)
+      .json({ message: "Passengers have been notified successfully." });
   } catch (error) {
     console.error("Error changing time:", error);
     res.status(500).json({ error: "Failed to notify passengers." });

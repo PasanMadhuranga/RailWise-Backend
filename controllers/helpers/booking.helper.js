@@ -37,8 +37,8 @@ export const getBookedSeatsofSchedule = async (
     if (
       !(
         (fromHalt.haltOrder < booking.startHalt.haltOrder &&
-          toHalt.haltOrder < booking.startHalt.haltOrder) ||
-        (fromHalt.haltOrder > booking.endHalt.haltOrder &&
+          toHalt.haltOrder <= booking.startHalt.haltOrder) ||
+        (fromHalt.haltOrder >= booking.endHalt.haltOrder &&
           toHalt.haltOrder > booking.endHalt.haltOrder)
       )
     ) {
@@ -55,8 +55,7 @@ export const getBookedSeatsofSchedule = async (
 };
 
 export const generateETickets = async (booking) => {
-  const templatePath = "./controllers/helpers/e-ticket-template.pdf";
-  const templateBytes = fs.readFileSync(templatePath);
+  const templateBytes = fs.readFileSync("./controllers/helpers/e-ticket-template.pdf");
   const pdfBuffers = [];
 
   for (const seat of booking.seats) {
@@ -80,9 +79,9 @@ export const generateETickets = async (booking) => {
 
     const qrData = JSON.stringify({ ...payload, signature });
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${
-      process.env.HOST
-    }:3000/api/bookings/validateTicket/${encodeURIComponent(
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=${
+      process.env.BACKEND_URL
+    }/api/bookings/validateTicket/${encodeURIComponent(
       payload.bookingId
     )}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
 
@@ -195,7 +194,6 @@ export const generateETickets = async (booking) => {
 };
 
 export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
-
   let transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -234,7 +232,7 @@ export const sendCancellationEmail = async (
   date
 ) => {
   let transporter = nodemailer.createTransport({
-    service: "gmail", 
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.APP_PASSWORD,
@@ -254,7 +252,7 @@ export const sendCancellationEmail = async (
     .replace("{{startHalt}}", startHalt)
     .replace("{{endHalt}}", endHalt);
 
-    let mailOptions = {
+  let mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Booking Cancelled",

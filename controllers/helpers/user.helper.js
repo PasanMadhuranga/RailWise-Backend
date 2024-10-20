@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import ExpressError from "../../utils/ExpressError.utils.js";
+import fs from "fs";
 
 export const sendForgotPassEmail = async (email, resetToken) => {
   const transporter = nodemailer.createTransport({
@@ -10,11 +11,21 @@ export const sendForgotPassEmail = async (email, resetToken) => {
     },
   });
 
-  const mailOptions = {
+  let htmlContent = fs.readFileSync(
+    "./controllers/helpers/email_templates/passwordResetEmail.html",
+    "utf-8"
+  );
+
+  htmlContent = htmlContent.replace(
+    "{{resetLink}}",
+    `${process.env.CLIENT_URL}/reset-password/${resetToken}`
+  );
+
+  let mailOptions = {
     from: process.env.EMAIL,
     to: email,
     subject: "Password Reset",
-    text: `You are receiving this email because you have requested to reset your password. Please click on the following link to reset your password: \n\n${process.env.CLIENT_URL}/reset-password/${resetToken}`,
+    html: htmlContent,
   };
 
   try {

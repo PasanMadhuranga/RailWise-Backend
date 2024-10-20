@@ -33,13 +33,17 @@ mongoose
 
 app.use(express.json());
 app.use(cookieParser());
-// app.use(
-//   cors({
-//     origin: ["http://localhost:5173", "http://localhost:5174"],
-//     credentials: true,
-//   })
-// );
-app.use(cors());
+
+app.use(
+  cors({
+    origin: [
+      "https://railwise-web.onrender.com",
+      "https://railwise-admin.onrender.com",
+    ],
+    credentials: true,
+  })
+);
+
 app.use("/api/stations", stationRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/bookings", bookingRoutes);
@@ -59,17 +63,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = 3000;
-const HOST = process.env.HOST || "0.0.0.0";
-
-app.get('/', (req, res) => {
-  res.status(200).send('OK');
+app.listen(3000, () => {
+  console.log(`Server listening on http://localhost:3000`);
 });
-
-app.listen(PORT, HOST, () => {
-  console.log(`Server listening on http://${HOST}:${PORT}`);
-});
-
-// app.listen(3000, () => {
-//   console.log(`Server listening on http://localhost:3000`);
-// });
