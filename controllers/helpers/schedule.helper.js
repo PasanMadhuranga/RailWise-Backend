@@ -5,7 +5,7 @@ import WagonClass from "../../models/wagonClass.model.js";
 import Halt from "../../models/halt.model.js";
 import Seat from "../../models/seat.model.js";
 
-// get the total number of seats of each class of the given train
+
 export const getTotalSeatsofEachClass = async (trainId) => {
   const trainDetails = await Train.findById(trainId).populate({
     path: "wagons",
@@ -31,13 +31,14 @@ export const getTotalSeatsofEachClass = async (trainId) => {
   return { firstClass, secondClass, thirdClass };
 };
 
-// get the number of booked seats of each class of the given schedule on the given date
+
 export const getBookedSeatsofEachClass = async (
   scheduleId,
   date,
   fromHalt,
   toHalt
 ) => {
+
   // get all the bookings of that schedule on that date
   const AllbookingsOnDate = await Booking.find({
     scheduleRef: scheduleId,
@@ -45,7 +46,7 @@ export const getBookedSeatsofEachClass = async (
       $gte: new Date(date),
       $lt: new Date(date).setDate(new Date(date).getDate() + 1),
     },
-    status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
+    status: { $ne: "cancelled" },
   })
     .populate({
       path: "startHalt",

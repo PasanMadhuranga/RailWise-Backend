@@ -1,13 +1,12 @@
-// jest.config.cjs
 module.exports = {
   transform: {
-    "^.+\\.js$": "babel-jest", // Transforms JS files using babel-jest
+    "^.+\\.js$": "babel-jest", 
   },
-  testEnvironment: "node",       // Sets the test environment to Node.js
+  testEnvironment: "node",       
   moduleFileExtensions: ["js"],
   globals: {
     "babel-jest": {
-      useESM: true,               // Informs babel-jest to handle ES modules
+      useESM: true,              
     },
   },
 };

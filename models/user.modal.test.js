@@ -34,14 +34,14 @@ describe("User model tests", () => {
     // Try to create another user with the same username
     try {
       await User.create({ 
-        username: "testuser",  // Same username
+        username: "testuser",
         email: "user2@example.com", 
         password: "password456", 
         phone: "0987654321" 
       });
     } catch (err) {
       expect(err).toBeTruthy();
-      expect(err.code).toBe(11000);  // 11000 is the error code for duplicate keys in MongoDB
+      expect(err.code).toBe(11000);
     }
   });
 
@@ -58,13 +58,13 @@ describe("User model tests", () => {
     try {
       await User.create({ 
         username: "user2", 
-        email: "test@example.com",  // Same email
+        email: "test@example.com",  
         password: "password456", 
         phone: "0987654321" 
       });
     } catch (err) {
       expect(err).toBeTruthy();
-      expect(err.code).toBe(11000);  // 11000 is the error code for duplicate keys in MongoDB
+      expect(err.code).toBe(11000);  
     }
   });
 
@@ -75,7 +75,7 @@ describe("User model tests", () => {
     const user = await User.create({
       username: "hashTestUser",
       email: "hashuser@example.com",
-      password: password,  // Plain password
+      password: password,  
       phone: "1234567890"
     });
 

@@ -14,7 +14,6 @@ import Stripe from "stripe";
 
 import * as crypto from "crypto";
 
-// create a pending booking until the user makes the payment
 export const createPendingBooking = async (req, res, next) => {
   const {
     userId,
@@ -26,19 +25,14 @@ export const createPendingBooking = async (req, res, next) => {
     selectedClassId,
   } = req.body;
 
-  console.log("Pending booking request: ", req.body);
-
-  // get fromHalt and toHalt
   const fromHalt = await Halt.findById(fromHaltId).select("price");
   const toHalt = await Halt.findById(toHaltId).select("price");
 
-  // get the fare multiplier for the selected class
   const selectedClass = await WagonClass.findById(selectedClassId).select(
     "fareMultiplier"
   );
   const fareMultiplier = selectedClass.fareMultiplier;
 
-  // I want to check if the selected seats are available
   const bookedSeats = await getBookedSeatsofSchedule(
     scheduleId,
     date,
@@ -56,7 +50,7 @@ export const createPendingBooking = async (req, res, next) => {
 
   const totalFare =
     fareMultiplier * (toHalt.price - fromHalt.price) * selectedSeatIds.length;
-  const pendingTime = new Date(Date.now() + 5 * 60 * 1000); // select pending time as 5 minutes from now
+  const pendingTime = new Date(Date.now() + 5 * 60 * 1000);
   const booking = new Booking({
     userRef: userId,
     scheduleRef: scheduleId,
@@ -76,7 +70,6 @@ export const createPendingBooking = async (req, res, next) => {
 
 export const confirmBooking = async (req, res, next) => {
   const { bookingId, email, id } = req.body;
-  console.log("body: ", req.body);
 
   const stripe = new Stripe(`${process.env.STRIPE_SECRET_KEY}`);
   const booking = await Booking.findById(bookingId)
@@ -126,14 +119,14 @@ export const confirmBooking = async (req, res, next) => {
   }
 
   const payment = await stripe.paymentIntents.create({
-    amount: booking.totalFare * 100, // Amount in the smallest currency unit (e.g., 500 means $5.00)
+    amount: booking.totalFare * 100,
     currency: "lkr",
     description: `Train booking payment: ${booking._id}`,
     payment_method: id,
     confirm: true,
     automatic_payment_methods: {
-      enabled: true, // Enable automatic payment methods
-      allow_redirects: "never", // Prevent redirect-based payment methods
+      enabled: true,
+      allow_redirects: "never",
     },
   });
 
@@ -144,13 +137,10 @@ export const confirmBooking = async (req, res, next) => {
   booking.paymentId = payment.id;
   booking.status = "approved";
   booking.pendingTime = undefined;
-  console.log("Booking approved", booking);
   await booking.save();
 
-  // Generate PDFs for each seat
   const pdfBuffers = await generateETickets(booking);
 
-  // Send email to the user with e-tickets
   await sendConfirmationEmail(email, pdfBuffers);
 
   return res.status(200).json({ message: "Booking confirmed" });
@@ -158,7 +148,6 @@ export const confirmBooking = async (req, res, next) => {
 
 export const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
-  console.log("userId: ", req.userId);
   const booking = await Booking.findById(bookingId)
     .populate({
       path: "startHalt",
@@ -199,7 +188,7 @@ export const cancelBooking = async (req, res, next) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const refund = await stripe.refunds.create({
     payment_intent: booking.paymentId,
-    amount: Math.round(booking.totalFare * 0.8 * 100), // refund 80% of the total fare
+    amount: Math.round(booking.totalFare * 0.8 * 100),
   });
 
   if (refund.status !== "succeeded") {

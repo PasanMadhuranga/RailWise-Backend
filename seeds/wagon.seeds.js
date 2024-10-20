@@ -4,11 +4,9 @@ import Seat from "../models/seat.model.js";
 
 async function populateWagons() {
   try {
-  // Find all Wagon types
   const wagonClasses = await WagonClass.find();
   const seatsArr = await Seat.find();
 
-  // Assuming Wagon types are named 'First Class', 'Second Class', and 'Third Class'
   const firstClassType = wagonClasses.find((type) => type.name === "first");
   const secondClassType = wagonClasses.find(
     (type) => type.name === "second"

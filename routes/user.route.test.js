@@ -30,35 +30,13 @@ describe('User API Endpoints', () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-  }, 60000); // Increase timeout if needed
+  }, 60000);
 
   afterEach(async () => {
     // Disconnect and stop in-memory MongoDB
     await mongoose.disconnect();
     await mongoServer.stop();
-  }, 60000); // Increase timeout if needed
-
-  // test('POST /api/users/register - should register a new user', async () => {
-  //   const newUser = {
-  //     username: 'testuser',
-  //     email: 'testuser@example.com',
-  //     password: 'password123',
-  //     phone: '1234567890',
-  //   };
-
-  //   const response = await request.post('/api/users/register').send(newUser);
-    
-
-  //   expect(response.status).toBe(200); , it's 200
-  //   expect(response.body).toHaveProperty('username', newUser.username);
-  //   expect(response.body).toHaveProperty('email', newUser.email);
-  //   expect(response.body).not.toHaveProperty('password'); // Password should not be returned
-
-  //   // Check if the cookie is set
-  //   const cookies = response.headers['set-cookie'];
-  //   expect(cookies).toBeDefined();
-  //   expect(cookies.some(cookie => cookie.startsWith('access_token='))).toBe(true);
-  // });
+  }, 60000);
 
   test('POST /api/users/register - should not allow duplicate usernames', async () => {
     const user1 = {
@@ -69,7 +47,7 @@ describe('User API Endpoints', () => {
     };
 
     const user2 = {
-      username: 'duplicateuser', // Same username
+      username: 'duplicateuser',
       email: 'user2@example.com',
       password: 'password456',
       phone: '0987654321',
@@ -95,7 +73,7 @@ describe('User API Endpoints', () => {
 
     const user2 = {
       username: 'user2',
-      email: 'duplicate@example.com', // Same email
+      email: 'duplicate@example.com', 
       password: 'password456',
       phone: '0987654321',
     };
@@ -223,7 +201,6 @@ describe('User API Endpoints', () => {
   });
 
   test('GET /api/users/bookingHistory - should retrieve booking history for authenticated user', async () => {
-    // Assuming you have Booking and related models set up properly
     const user = {
       username: 'bookinguser',
       email: 'bookinguser@example.com',
@@ -235,16 +212,11 @@ describe('User API Endpoints', () => {
     const registerResponse = await request.post('/api/users/register').send(user);
     const cookies = registerResponse.headers['set-cookie'];
 
-    // Create a booking associated with the user
-    // You may need to set up additional data like Schedule, Train, Halt, etc.
-    // For simplicity, this step is skipped. Ensure your database setup includes necessary references.
-
     // Retrieve booking history
     const response = await request.get('/api/users/bookingHistory').set('Cookie', cookies);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
-    // Additional assertions based on expected booking data
   });
 
   

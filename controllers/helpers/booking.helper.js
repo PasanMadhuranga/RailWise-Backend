@@ -19,7 +19,7 @@ export const getBookedSeatsofSchedule = async (
       $gte: new Date(date),
       $lt: new Date(date).setDate(new Date(date).getDate() + 1),
     },
-    status: { $ne: "cancelled" }, // exclude the cancelled bookings. that means only confirmed and hold bookings are considered
+    status: { $ne: "cancelled" }, // exclude the cancelled bookings.
   })
     .populate({
       path: "startHalt",
@@ -79,11 +79,10 @@ export const generateETickets = async (booking) => {
       .digest("hex");
 
     const qrData = JSON.stringify({ ...payload, signature });
-    console.log("QR Data:", qrData);
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=${
-      process.env.BACKEND_URL
-    }/api/bookings/validateTicket/${encodeURIComponent(
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=750x750&data=http://${
+      process.env.HOST
+    }:3000/api/bookings/validateTicket/${encodeURIComponent(
       payload.bookingId
     )}/${encodeURIComponent(payload.seatId)}/${encodeURIComponent(signature)}`;
 
@@ -192,26 +191,29 @@ export const generateETickets = async (booking) => {
     pdfBuffers.push(pdfBytes);
   }
 
-  console.log("PDFs generated");
   return pdfBuffers;
 };
 
 export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
-  // Create a transporter
   let transporter = nodemailer.createTransport({
-    service: "gmail", // or another email service
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.APP_PASSWORD,
     },
   });
 
-  // Email content
+  // read the email template from the file
+  let htmlContent = fs.readFileSync(
+    "./controllers/helpers/email_templates/bookingConfirmationEmail.html",
+    "utf8"
+  );
+
   let mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Booking Confirmation",
-    text: "Your booking has been confirmed. Please find your e-tickets attached.",
+    html: htmlContent,
     attachments: pdfBuffers.map((buffer, index) => ({
       filename: `e-ticket-${index + 1}.pdf`,
       content: buffer,
@@ -219,7 +221,6 @@ export const sendConfirmationEmail = async (userEmail, pdfBuffers) => {
     })),
   };
 
-  // Send the email
   await transporter.sendMail(mailOptions);
 };
 
@@ -231,20 +232,32 @@ export const sendCancellationEmail = async (
   trainName,
   date
 ) => {
-  // Create a transporter
   let transporter = nodemailer.createTransport({
-    service: "gmail", // or another email service
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.APP_PASSWORD,
     },
   });
-  // Email content
+
+  let htmlContent = fs.readFileSync(
+    "./controllers/helpers/email_templates/bookingCancellationEmail.html",
+    "utf-8"
+  );
+
+  // replace placeholders in the email template with actual values
+  htmlContent = htmlContent
+    .replace("{{userName}}", userName)
+    .replace("{{trainName}}", trainName)
+    .replace("{{date}}", date.toISOString().split("T")[0])
+    .replace("{{startHalt}}", startHalt)
+    .replace("{{endHalt}}", endHalt);
+
   let mailOptions = {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "Booking Cancelled",
-    text: `Dear ${userName}, \n Your booking has been cancelled on ${date} from ${startHalt} to ${endHalt} on ${trainName}. You will be refunded 80% of the booking amount. \n\n Regards, \n RailWise Team`,
+    html: htmlContent,
   };
 
   try {

@@ -1,10 +1,8 @@
 import Train from '../models/train.model.js';
 import Wagon from '../models/wagon.model.js';
 
-// Function to create train data
 const populateTrains = async () => {
   try {
-    // Check if trains already exist
     const existingTrains = await Train.find({});
     if (existingTrains.length > 0) {
       console.log('Trains already populated');

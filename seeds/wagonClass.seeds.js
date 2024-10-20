@@ -8,14 +8,12 @@ const wagonClasses = [
 
 const populateWagonClasses = async () => {
   try {
-    // Check if WagonClasses already exist
     const existingWagonClasses = await wagonClass.find({});
     if (existingWagonClasses.length > 0) {
       console.log("wagonClasses already populated");
       return;
     }
 
-    // Create wagonType instances
     await wagonClass.insertMany(wagonClasses);
 
     console.log("WagonClasses successfully populated");

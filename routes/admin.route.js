@@ -20,7 +20,7 @@ const router = express.Router();
 router.get("/schedules", catchAsync(getSchedules));
 router.post("/login", catchAsync(login));
 
-// Graphs
+
 router.get(
   "/bookingsCount/:status/:scheduleId/:timeFrame",
   catchAsync(getBookingsCount)
@@ -32,11 +32,11 @@ router.get(
   catchAsync(getBookingClassDistribution)
 );
 
-// Tables
+
 router.get("/bookingsDetails/:status/:scheduleId", catchAsync(getBookingsDetails));
 router.get("/schedulesDetails", catchAsync(getSchedulesDetails));
 
-// Reschedule
+
 router.post("/PlatformChange", catchAsync(changePlatform)); 
 router.get("/getHalts/:scheduleId", catchAsync(getHalts));
 router.post("/TimeChange", catchAsync(timeChange));
