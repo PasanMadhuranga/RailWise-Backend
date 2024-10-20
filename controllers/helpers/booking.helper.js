@@ -55,8 +55,7 @@ export const getBookedSeatsofSchedule = async (
 };
 
 export const generateETickets = async (booking) => {
-  const templatePath = "./controllers/helpers/e-ticket-template.pdf";
-  const templateBytes = fs.readFileSync(templatePath);
+  const templateBytes = fs.readFileSync("./controllers/helpers/e-ticket-template.pdf");
   const pdfBuffers = [];
 
   for (const seat of booking.seats) {
