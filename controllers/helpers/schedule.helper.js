@@ -75,8 +75,8 @@ export const getBookedSeatsofEachClass = async (
     if (
       !(
         (fromHalt.haltOrder < booking.startHalt.haltOrder &&
-          toHalt.haltOrder < booking.startHalt.haltOrder) ||
-        (fromHalt.haltOrder > booking.endHalt.haltOrder &&
+          toHalt.haltOrder <= booking.startHalt.haltOrder) ||
+        (fromHalt.haltOrder >= booking.endHalt.haltOrder &&
           toHalt.haltOrder > booking.endHalt.haltOrder)
       )
     ) {
