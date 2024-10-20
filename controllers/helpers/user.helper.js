@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import ExpressError from "../../utils/ExpressError.utils.js";
+import fs from "fs";
 
 export const sendForgotPassEmail = async (email, resetToken) => {
   const transporter = nodemailer.createTransport({
